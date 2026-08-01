@@ -3,6 +3,7 @@ import L from "leaflet";
 import { useEffect } from "react";
 import type { HotelNote } from "./types";
 import { formatPrice } from "./formatPrice";
+import StarIcon from "./StarIcon";
 const markerIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl:
@@ -68,7 +69,21 @@ export default function HotelsMap({
         >
           <Popup>
             <div className="min-w-[160px] text-sm">
-              <div className="font-semibold">{n.name}</div>
+              {n.photoUrl ? (
+                <img
+                  src={n.photoUrl}
+                  alt=""
+                  className="mb-1 h-20 w-full rounded object-cover"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
+              ) : null}
+              <div className="flex items-center gap-1 font-semibold">
+                {n.favorite ? (
+                  <StarIcon filled className="h-4 w-4 text-amber-400" />
+                ) : null}
+                <span>{n.name}</span>
+              </div>
               {n.priceTwoRooms ? (
                 <div>2 rooms: {formatPrice(n.priceTwoRooms)}</div>
               ) : null}

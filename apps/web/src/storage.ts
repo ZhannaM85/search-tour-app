@@ -8,10 +8,34 @@ export function loadNotes(): HotelNote[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed as HotelNote[];
+    return parsed.map(normalizeNote).filter((n): n is HotelNote => n != null);
   } catch {
     return [];
   }
+}
+
+function normalizeNote(value: unknown): HotelNote | null {
+  if (!value || typeof value !== "object") return null;
+  const n = value as Partial<HotelNote> & Record<string, unknown>;
+  if (typeof n.id !== "string" || typeof n.name !== "string") return null;
+  if (typeof n.latitude !== "number" || typeof n.longitude !== "number") {
+    return null;
+  }
+  return {
+    id: n.id,
+    hotelId: typeof n.hotelId === "number" ? n.hotelId : null,
+    name: n.name,
+    pageUrl: typeof n.pageUrl === "string" ? n.pageUrl : "",
+    photoUrl: typeof n.photoUrl === "string" ? n.photoUrl : "",
+    latitude: n.latitude,
+    longitude: n.longitude,
+    priceOneRoom: typeof n.priceOneRoom === "string" ? n.priceOneRoom : "",
+    priceTwoRooms: typeof n.priceTwoRooms === "string" ? n.priceTwoRooms : "",
+    notes: typeof n.notes === "string" ? n.notes : "",
+    favorite: Boolean(n.favorite),
+    createdAt: typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),
+    updatedAt: typeof n.updatedAt === "string" ? n.updatedAt : new Date().toISOString(),
+  };
 }
 
 export function saveNotes(notes: HotelNote[]): void {

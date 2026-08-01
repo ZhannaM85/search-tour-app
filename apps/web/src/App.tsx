@@ -1,8 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import HotelsMap from "./HotelsMap";
+import StarIcon from "./StarIcon";
 import { parseTourCurl } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
+import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
 import {
   loadNotes,
   newNoteId,
@@ -17,12 +19,14 @@ type FormState = {
   curl: string;
   name: string;
   pageUrl: string;
+  photoUrl: string;
   hotelId: string;
   latitude: string;
   longitude: string;
   priceOneRoom: string;
   priceTwoRooms: string;
   notes: string;
+  favorite: boolean;
 };
 
 const emptyForm = (): FormState => ({
@@ -30,24 +34,48 @@ const emptyForm = (): FormState => ({
   curl: "",
   name: "",
   pageUrl: "",
+  photoUrl: "",
   hotelId: "",
   latitude: "",
   longitude: "",
   priceOneRoom: "",
   priceTwoRooms: "",
   notes: "",
+  favorite: false,
 });
 
+function bootstrapNotes(): { notes: HotelNote[]; filled: number } {
+  const loaded = loadNotes();
+  const { notes, filled } = fillMissingPhotos(loaded);
+  if (filled > 0) saveNotes(notes as HotelNote[]);
+  return { notes: notes as HotelNote[], filled };
+}
+
+const initialBoot = bootstrapNotes();
+
 export default function App() {
-  const [notes, setNotes] = useState<HotelNote[]>(() => loadNotes());
+  const [notes, setNotes] = useState<HotelNote[]>(initialBoot.notes);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [status, setStatus] = useState("Paste a tours curl, then fill prices and notes.");
+  const [status, setStatus] = useState(
+    initialBoot.filled > 0
+      ? `Restored photos for ${initialBoot.filled} previously saved hotel(s).`
+      : "Paste a tours curl, then fill prices and notes.",
+  );
   const [busy, setBusy] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const sorted = useMemo(
-    () => [...notes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+  const sorted = useMemo(() => {
+    const list = favoritesOnly ? notes.filter((n) => n.favorite) : notes;
+    return [...list].sort((a, b) => {
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+      return b.updatedAt.localeCompare(a.updatedAt);
+    });
+  }, [notes, favoritesOnly]);
+
+  const favoriteCount = useMemo(
+    () => notes.filter((n) => n.favorite).length,
     [notes],
   );
 
@@ -69,11 +97,16 @@ export default function App() {
         ...f,
         name: parsed.name,
         pageUrl: parsed.pageUrl || f.pageUrl,
+        photoUrl: parsed.photoUrl || f.photoUrl,
         hotelId: parsed.hotelId != null ? String(parsed.hotelId) : "",
         latitude: String(parsed.latitude),
         longitude: String(parsed.longitude),
       }));
-      setStatus(`Loaded “${parsed.name}” with map coordinates.`);
+      setStatus(
+        parsed.photoUrl
+          ? `Loaded “${parsed.name}” with map coordinates and photo.`
+          : `Loaded “${parsed.name}” with map coordinates.`,
+      );
     } catch (err) {
       setStatus(err instanceof Error ? err.message : String(err));
     } finally {
@@ -95,17 +128,26 @@ export default function App() {
 
     const now = new Date().toISOString();
     const id = form.id ?? newNoteId();
+    const existing = notes.find((n) => n.id === id);
+    const hotelId = form.hotelId ? Number(form.hotelId) : null;
+    const photoUrl =
+      form.photoUrl.trim() ||
+      existing?.photoUrl ||
+      photoUrlFromHotelId(hotelId, form.pageUrl.trim()) ||
+      "";
     const note: HotelNote = {
       id,
-      hotelId: form.hotelId ? Number(form.hotelId) : null,
+      hotelId,
       name: form.name.trim(),
       pageUrl: form.pageUrl.trim(),
+      photoUrl,
       latitude: lat,
       longitude: lng,
       priceOneRoom: form.priceOneRoom.trim(),
       priceTwoRooms: form.priceTwoRooms.trim(),
       notes: form.notes.trim(),
-      createdAt: notes.find((n) => n.id === id)?.createdAt ?? now,
+      favorite: form.favorite,
+      createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
 
@@ -117,17 +159,21 @@ export default function App() {
   }
 
   function handleEdit(note: HotelNote) {
+    const photoUrl =
+      note.photoUrl || photoUrlFromHotelId(note.hotelId, note.pageUrl);
     setForm({
       id: note.id,
       curl: "",
       name: note.name,
       pageUrl: note.pageUrl,
+      photoUrl,
       hotelId: note.hotelId != null ? String(note.hotelId) : "",
       latitude: String(note.latitude),
       longitude: String(note.longitude),
       priceOneRoom: note.priceOneRoom,
       priceTwoRooms: note.priceTwoRooms,
       notes: note.notes,
+      favorite: note.favorite,
     });
     setFocusId(note.id);
     setStatus(`Editing “${note.name}”.`);
@@ -140,6 +186,25 @@ export default function App() {
     persist(removeNote(notes, id));
     if (form.id === id) setForm(emptyForm());
     setStatus(`Removed “${note.name}”.`);
+  }
+
+  function handleToggleFavorite(id: string) {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+    const next = upsertNote(notes, {
+      ...note,
+      favorite: !note.favorite,
+      updatedAt: new Date().toISOString(),
+    });
+    persist(next);
+    if (form.id === id) {
+      setForm((f) => ({ ...f, favorite: !note.favorite }));
+    }
+    setStatus(
+      !note.favorite
+        ? `Marked “${note.name}” as favorite.`
+        : `Removed “${note.name}” from favorites.`,
+    );
   }
 
   function handleExport() {
@@ -234,6 +299,18 @@ export default function App() {
               />
             </label>
 
+            {form.photoUrl ? (
+              <div className="sm:col-span-2">
+                <div className="text-sm font-medium text-slate-700">Photo</div>
+                <img
+                  src={form.photoUrl}
+                  alt=""
+                  className="mt-1 h-24 w-36 rounded-xl object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : null}
+
             <label className="block text-sm font-medium text-slate-700">
               Latitude
               <input
@@ -297,6 +374,21 @@ export default function App() {
                 placeholder="Room name, dates, operator, what you liked…"
               />
             </label>
+
+            <button
+              type="button"
+              onClick={() => setField("favorite", !form.favorite)}
+              className={`inline-flex w-fit items-center justify-center rounded-xl border p-2 sm:col-span-2 ${
+                form.favorite
+                  ? "border-amber-300 bg-amber-50 text-amber-400"
+                  : "border-slate-300 bg-white text-slate-300 hover:text-amber-400"
+              }`}
+              aria-pressed={form.favorite}
+              aria-label={form.favorite ? "Remove from favorites" : "Add to favorites"}
+              title={form.favorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <StarIcon filled={form.favorite} className="h-6 w-6" />
+            </button>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -327,9 +419,29 @@ export default function App() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-slate-900">
-              Saved hotels ({sorted.length})
+              Saved hotels ({sorted.length}
+              {favoritesOnly ? ` of ${notes.length}` : ""})
             </h2>
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setFavoritesOnly((v) => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-medium ${
+                  favoritesOnly
+                    ? "border-amber-300 bg-amber-50 text-amber-700"
+                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+                aria-pressed={favoritesOnly}
+              >
+                <StarIcon
+                  filled={favoritesOnly}
+                  className={`h-4 w-4 ${
+                    favoritesOnly ? "text-amber-500" : "text-slate-400"
+                  }`}
+                />
+                Favorites only
+                {favoriteCount > 0 ? ` (${favoriteCount})` : ""}
+              </button>
               <button
                 type="button"
                 onClick={handleExport}
@@ -353,26 +465,63 @@ export default function App() {
               />
             </div>
           </div>
-          {sorted.length === 0 ? (
+          {notes.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">
               None yet. Export downloads a backup JSON; Import restores it.
+            </p>
+          ) : sorted.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-500">
+              No favorites yet. Tap the star on a hotel to mark one.
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
               {sorted.map((n) => (
                 <li
                   key={n.id}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                  className={`rounded-xl border p-3 ${
+                    n.favorite
+                      ? "border-amber-300 bg-amber-50/60"
+                      : "border-slate-200 bg-slate-50"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <button
-                        type="button"
-                        className="text-left font-semibold text-teal-800 hover:underline"
-                        onClick={() => setFocusId(n.id)}
-                      >
-                        {n.name}
-                      </button>
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      {n.photoUrl ? (
+                        <img
+                          src={n.photoUrl}
+                          alt=""
+                          className="h-16 w-20 shrink-0 rounded-lg object-cover"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : null}
+                      <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          className={`shrink-0 rounded p-0.5 ${
+                            n.favorite
+                              ? "text-amber-400 hover:text-amber-500"
+                              : "text-slate-300 hover:text-amber-400"
+                          }`}
+                          onClick={() => handleToggleFavorite(n.id)}
+                          aria-label={
+                            n.favorite
+                              ? `Remove ${n.name} from favorites`
+                              : `Add ${n.name} to favorites`
+                          }
+                          aria-pressed={n.favorite}
+                        >
+                          <StarIcon filled={n.favorite} className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="text-left font-semibold text-teal-800 hover:underline"
+                          onClick={() => setFocusId(n.id)}
+                        >
+                          {n.name}
+                        </button>
+                      </div>
                       <div className="mt-1 text-sm text-slate-600">
                         {n.priceOneRoom
                           ? `1 room: ${formatPrice(n.priceOneRoom)}`
@@ -385,6 +534,7 @@ export default function App() {
                       {n.notes ? (
                         <p className="mt-1 text-sm text-slate-700">{n.notes}</p>
                       ) : null}
+                      </div>
                     </div>
                     <div className="flex shrink-0 flex-col gap-1">
                       <button
@@ -421,7 +571,7 @@ export default function App() {
       </div>
 
       <section className="h-[min(80vh,720px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <HotelsMap notes={notes} focusId={focusId} />
+        <HotelsMap notes={sorted} focusId={focusId} />
       </section>
     </div>
   );

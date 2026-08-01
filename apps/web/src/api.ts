@@ -4,6 +4,7 @@ export type ParsedHotel = {
   hotelId: number | null;
   name: string;
   pageUrl: string;
+  photoUrl: string;
   latitude: number;
   longitude: number;
   refererUrl?: string;

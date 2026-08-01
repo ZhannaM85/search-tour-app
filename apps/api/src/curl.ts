@@ -2,9 +2,20 @@ const IDX = {
   HOTEL_SLUG: 2,
   HOTEL_ID: 3,
   HOTEL_NAME: 7,
+  /** Protocol-relative hotel thumbnail, e.g. `//host/i/p/{id}_30.jpg` */
+  PHOTO: 29,
   LAT: 92,
   LNG: 93,
 } as const;
+
+/** Turn `//host/path` or absolute http(s) into a usable https URL. */
+export function absoluteHttpUrl(raw: string): string {
+  const s = raw.trim();
+  if (!s) return "";
+  if (s.startsWith("//")) return `https:${s}`;
+  if (/^https?:\/\//i.test(s)) return s;
+  return "";
+}
 
 export function normalizeCurlText(raw: string): string {
   return raw
@@ -80,6 +91,23 @@ function pageUrlFromSlug(slug: string, referer: string): string {
   return slug;
 }
 
+/**
+ * Prefer mid-size hotel image `/i/im/{hotelId}_0_1280_720_1.jpg` on the same
+ * host as the row thumbnail. Never uses the tour-operator logo column.
+ */
+function hotelPhotoUrl(hotelId: number | null, rowPhoto: string): string {
+  const absolute = absoluteHttpUrl(rowPhoto);
+  if (hotelId != null && absolute) {
+    try {
+      const u = new URL(absolute);
+      return `${u.origin}/i/im/${hotelId}_0_1280_720_1.jpg`;
+    } catch {
+      /* fall through */
+    }
+  }
+  return absolute;
+}
+
 export function extractFromTourRows(
   payload: unknown,
   refererUrl = "",
@@ -87,6 +115,7 @@ export function extractFromTourRows(
   hotelId: number | null;
   name: string;
   pageUrl: string;
+  photoUrl: string;
   latitude: number;
   longitude: number;
 } {
@@ -108,10 +137,12 @@ export function extractFromTourRows(
     throw new Error("Could not read coordinates from tour row.");
   }
 
+  const hotelId = asNumber(row, IDX.HOTEL_ID);
   return {
-    hotelId: asNumber(row, IDX.HOTEL_ID),
+    hotelId,
     name: asString(row, IDX.HOTEL_NAME) || "Hotel",
     pageUrl: pageUrlFromSlug(asString(row, IDX.HOTEL_SLUG), refererUrl),
+    photoUrl: hotelPhotoUrl(hotelId, asString(row, IDX.PHOTO)),
     latitude,
     longitude,
   };

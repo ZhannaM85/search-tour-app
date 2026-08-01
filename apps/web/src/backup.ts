@@ -20,8 +20,18 @@ function isHotelNote(value: unknown): value is HotelNote {
     typeof n.notes === "string" &&
     typeof n.createdAt === "string" &&
     typeof n.updatedAt === "string" &&
-    (n.hotelId === null || typeof n.hotelId === "number")
+    (n.hotelId === null || typeof n.hotelId === "number") &&
+    (n.favorite === undefined || typeof n.favorite === "boolean") &&
+    (n.photoUrl === undefined || typeof n.photoUrl === "string")
   );
+}
+
+function withDefaults(notes: HotelNote[]): HotelNote[] {
+  return notes.map((n) => ({
+    ...n,
+    favorite: Boolean(n.favorite),
+    photoUrl: typeof n.photoUrl === "string" ? n.photoUrl : "",
+  }));
 }
 
 export function parseBackupJson(text: string): HotelNote[] {
@@ -36,7 +46,7 @@ export function parseBackupJson(text: string): HotelNote[] {
     if (!envelope.hotels.every(isHotelNote)) {
       throw new Error("Backup file has invalid hotel entries.");
     }
-    return envelope.hotels;
+    return withDefaults(envelope.hotels as HotelNote[]);
   }
 
   // Plain array (older / manual export)
@@ -44,7 +54,7 @@ export function parseBackupJson(text: string): HotelNote[] {
     if (!parsed.every(isHotelNote)) {
       throw new Error("Backup file has invalid hotel entries.");
     }
-    return parsed;
+    return withDefaults(parsed as HotelNote[]);
   }
 
   throw new Error("Backup file format is not recognized.");

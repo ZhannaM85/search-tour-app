@@ -240,8 +240,8 @@ export default function App() {
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-2">
-      <div className="space-y-6">
+    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:h-[100dvh] lg:grid-cols-2 lg:overflow-hidden lg:py-4">
+      <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
         <header>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
             Personal shortlist
@@ -583,7 +583,7 @@ export default function App() {
         </section>
       </div>
 
-      <section className="h-[min(80vh,720px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="h-[min(70vh,560px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-full lg:min-h-0">
         <HotelsMap notes={sorted} focusId={focusId} />
       </section>
     </div>

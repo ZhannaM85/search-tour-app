@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import HotelsMap from "./HotelsMap";
 import { parseTourCurl } from "./api";
+import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import {
   loadNotes,
@@ -43,6 +44,7 @@ export default function App() {
   const [status, setStatus] = useState("Paste a tours curl, then fill prices and notes.");
   const [busy, setBusy] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(
     () => [...notes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
@@ -138,6 +140,39 @@ export default function App() {
     persist(removeNote(notes, id));
     if (form.id === id) setForm(emptyForm());
     setStatus(`Removed “${note.name}”.`);
+  }
+
+  function handleExport() {
+    if (notes.length === 0) {
+      setStatus("Nothing to export yet.");
+      return;
+    }
+    downloadBackup(notes);
+    setStatus(`Exported ${notes.length} hotel(s) to a JSON file.`);
+  }
+
+  async function handleImportFile(file: File | undefined) {
+    if (!file) return;
+    try {
+      const imported = await readBackupFile(file);
+      if (
+        notes.length > 0 &&
+        !confirm(
+          `Replace your current shortlist (${notes.length}) with ${imported.length} hotel(s) from the file?`,
+        )
+      ) {
+        setStatus("Import cancelled.");
+        return;
+      }
+      persist(imported);
+      setForm(emptyForm());
+      setFocusId(null);
+      setStatus(`Imported ${imported.length} hotel(s) from backup.`);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : String(err));
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = "";
+    }
   }
 
   return (
@@ -290,11 +325,38 @@ export default function App() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Saved hotels ({sorted.length})
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Saved hotels ({sorted.length})
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+              >
+                Export
+              </button>
+              <button
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+              >
+                Import
+              </button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => handleImportFile(e.target.files?.[0])}
+              />
+            </div>
+          </div>
           {sorted.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">None yet.</p>
+            <p className="mt-2 text-sm text-slate-500">
+              None yet. Export downloads a backup JSON; Import restores it.
+            </p>
           ) : (
             <ul className="mt-3 space-y-3">
               {sorted.map((n) => (

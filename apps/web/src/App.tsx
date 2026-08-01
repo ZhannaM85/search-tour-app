@@ -64,6 +64,7 @@ export default function App() {
   );
   const [busy, setBusy] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [focusNonce, setFocusNonce] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +78,20 @@ export default function App() {
     () => notes.filter((n) => n.favorite).length,
     [notes],
   );
+
+  function selectHotel(id: string) {
+    setFocusId(id);
+    setFocusNonce((n) => n + 1);
+  }
+
+  /** List click: select, or click again to clear. */
+  function toggleFocusHotel(id: string) {
+    if (focusId === id) {
+      setFocusId(null);
+      return;
+    }
+    selectHotel(id);
+  }
 
   function persist(next: HotelNote[]) {
     setNotes(next);
@@ -152,7 +167,7 @@ export default function App() {
 
     const next = upsertNote(notes, note);
     persist(next);
-    setFocusId(id);
+    selectHotel(id);
     setForm(emptyForm());
     setStatus(`Saved “${note.name}”.`);
   }
@@ -174,7 +189,7 @@ export default function App() {
       notes: note.notes,
       favorite: note.favorite,
     });
-    setFocusId(note.id);
+    selectHotel(note.id);
     setStatus(`Editing “${note.name}”.`);
   }
 
@@ -491,11 +506,14 @@ export default function App() {
               {sorted.map((n) => (
                 <li
                   key={n.id}
-                  className={`rounded-xl border p-3 ${
-                    n.favorite
-                      ? "border-amber-300 bg-amber-50/60"
-                      : "border-slate-200 bg-slate-50"
+                  className={`cursor-pointer rounded-xl border p-3 transition-colors ${
+                    focusId === n.id
+                      ? "border-teal-500 bg-teal-50 ring-1 ring-teal-400"
+                      : n.favorite
+                        ? "border-amber-300 bg-amber-50/60"
+                        : "border-slate-200 bg-slate-50 hover:border-slate-300"
                   }`}
+                  onClick={() => toggleFocusHotel(n.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -517,7 +535,10 @@ export default function App() {
                               ? "text-amber-400 hover:text-amber-500"
                               : "text-slate-300 hover:text-amber-400"
                           }`}
-                          onClick={() => handleToggleFavorite(n.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleFavorite(n.id);
+                          }}
                           aria-label={
                             n.favorite
                               ? `Remove ${n.name} from favorites`
@@ -527,13 +548,9 @@ export default function App() {
                         >
                           <StarIcon filled={n.favorite} className="h-5 w-5" />
                         </button>
-                        <button
-                          type="button"
-                          className="text-left font-semibold text-teal-800 hover:underline"
-                          onClick={() => setFocusId(n.id)}
-                        >
+                        <span className="font-semibold text-teal-800">
                           {n.name}
-                        </button>
+                        </span>
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
                         {n.priceOneRoom
@@ -553,14 +570,20 @@ export default function App() {
                       <button
                         type="button"
                         className="text-xs text-slate-600 hover:underline"
-                        onClick={() => handleEdit(n)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(n);
+                        }}
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         className="text-xs text-rose-600 hover:underline"
-                        onClick={() => handleDelete(n.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(n.id);
+                        }}
                       >
                         Delete
                       </button>
@@ -570,6 +593,7 @@ export default function App() {
                           href={n.pageUrl}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Open
                         </a>
@@ -584,7 +608,11 @@ export default function App() {
       </div>
 
       <section className="h-[min(70vh,560px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-full lg:min-h-0">
-        <HotelsMap notes={sorted} focusId={focusId} />
+        <HotelsMap
+          notes={sorted}
+          focusId={focusId}
+          focusNonce={focusNonce}
+        />
       </section>
     </div>
   );

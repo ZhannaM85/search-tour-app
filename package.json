@@ -1,0 +1,15 @@
+{
+  "name": "search-tour-app",
+  "private": true,
+  "version": "0.2.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:api",
+    "dev:api": "npm run dev -w @search-tour/api",
+    "dev:web": "npm run dev -w @search-tour/web",
+    "build": "npm run build -w @search-tour/api && npm run build -w @search-tour/web",
+    "typecheck": "npm run typecheck -w @search-tour/api && npm run typecheck -w @search-tour/web"
+  }
+}

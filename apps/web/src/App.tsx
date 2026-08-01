@@ -5,6 +5,7 @@ import { parseTourCurl } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
+import { sortHotels, type SortMode } from "./sortHotels";
 import {
   loadNotes,
   newNoteId,
@@ -64,15 +65,13 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>("recent");
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(() => {
     const list = favoritesOnly ? notes.filter((n) => n.favorite) : notes;
-    return [...list].sort((a, b) => {
-      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
-      return b.updatedAt.localeCompare(a.updatedAt);
-    });
-  }, [notes, favoritesOnly]);
+    return sortHotels(list, sortMode);
+  }, [notes, favoritesOnly, sortMode]);
 
   const favoriteCount = useMemo(
     () => notes.filter((n) => n.favorite).length,
@@ -423,6 +422,20 @@ export default function App() {
               {favoritesOnly ? ` of ${notes.length}` : ""})
             </h2>
             <div className="flex flex-wrap gap-2">
+              <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                <span className="sr-only">Sort by</span>
+                <select
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+                >
+                  <option value="recent">Sort: recent</option>
+                  <option value="one-asc">1 room: low → high</option>
+                  <option value="one-desc">1 room: high → low</option>
+                  <option value="two-asc">2 rooms: low → high</option>
+                  <option value="two-desc">2 rooms: high → low</option>
+                </select>
+              </label>
               <button
                 type="button"
                 onClick={() => setFavoritesOnly((v) => !v)}

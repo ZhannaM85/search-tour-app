@@ -2,6 +2,10 @@
 
 Personal notes for hotels you already checked by hand.
 
+## Demo
+
+![Demo](docs/demo.mp4)
+
 1. On a hotel page, copy the tours request as cURL  
 2. Paste it here → **Load name & coordinates**  
 3. Enter price for 1 room and for 2 rooms, plus your notes  

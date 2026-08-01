@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import HotelsMap from "./HotelsMap";
 import { parseTourCurl } from "./api";
+import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import {
   loadNotes,
   newNoteId,
@@ -218,22 +219,38 @@ export default function App() {
 
             <label className="block text-sm font-medium text-slate-700">
               Price — 1 room
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-                value={form.priceOneRoom}
-                onChange={(e) => setField("priceOneRoom", e.target.value)}
-                placeholder="e.g. 280000"
-              />
+              <div className="relative mt-1">
+                <input
+                  inputMode="numeric"
+                  className="w-full rounded-xl border border-slate-300 py-2 pl-3 pr-8"
+                  value={formatPriceInput(form.priceOneRoom)}
+                  onChange={(e) =>
+                    setField("priceOneRoom", parsePriceDigits(e.target.value))
+                  }
+                  placeholder="280 000"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-slate-400">
+                  ₽
+                </span>
+              </div>
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
               Price — 2 rooms
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
-                value={form.priceTwoRooms}
-                onChange={(e) => setField("priceTwoRooms", e.target.value)}
-                placeholder="e.g. 360000"
-              />
+              <div className="relative mt-1">
+                <input
+                  inputMode="numeric"
+                  className="w-full rounded-xl border border-slate-300 py-2 pl-3 pr-8"
+                  value={formatPriceInput(form.priceTwoRooms)}
+                  onChange={(e) =>
+                    setField("priceTwoRooms", parsePriceDigits(e.target.value))
+                  }
+                  placeholder="360 000"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-slate-400">
+                  ₽
+                </span>
+              </div>
             </label>
 
             <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
@@ -295,9 +312,13 @@ export default function App() {
                         {n.name}
                       </button>
                       <div className="mt-1 text-sm text-slate-600">
-                        {n.priceOneRoom ? `1 room: ${n.priceOneRoom}` : null}
+                        {n.priceOneRoom
+                          ? `1 room: ${formatPrice(n.priceOneRoom)}`
+                          : null}
                         {n.priceOneRoom && n.priceTwoRooms ? " · " : null}
-                        {n.priceTwoRooms ? `2 rooms: ${n.priceTwoRooms}` : null}
+                        {n.priceTwoRooms
+                          ? `2 rooms: ${formatPrice(n.priceTwoRooms)}`
+                          : null}
                       </div>
                       {n.notes ? (
                         <p className="mt-1 text-sm text-slate-700">{n.notes}</p>

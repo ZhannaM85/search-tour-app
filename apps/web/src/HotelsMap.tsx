@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect } from "react";
 import type { HotelNote } from "./types";
+import { formatPrice } from "./formatPrice";
 const markerIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl:
@@ -69,9 +70,11 @@ export default function HotelsMap({
             <div className="min-w-[160px] text-sm">
               <div className="font-semibold">{n.name}</div>
               {n.priceTwoRooms ? (
-                <div>2 rooms: {n.priceTwoRooms}</div>
+                <div>2 rooms: {formatPrice(n.priceTwoRooms)}</div>
               ) : null}
-              {n.priceOneRoom ? <div>1 room: {n.priceOneRoom}</div> : null}
+              {n.priceOneRoom ? (
+                <div>1 room: {formatPrice(n.priceOneRoom)}</div>
+              ) : null}
               {n.notes ? (
                 <div className="mt-1 text-slate-600">{n.notes}</div>
               ) : null}

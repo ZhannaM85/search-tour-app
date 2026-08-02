@@ -7,7 +7,7 @@ import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
 import { sortHotels, type SortMode } from "./sortHotels";
 import {
-  findNoteByHotelId,
+  findDuplicateHotel,
   loadNotes,
   newNoteId,
   removeNote,
@@ -117,11 +117,25 @@ export default function App() {
         latitude: String(parsed.latitude),
         longitude: String(parsed.longitude),
       }));
-      setStatus(
-        parsed.photoUrl
-          ? `Loaded “${parsed.name}” with map coordinates and photo.`
-          : `Loaded “${parsed.name}” with map coordinates.`,
-      );
+      const duplicate = findDuplicateHotel(notes, {
+        hotelId: parsed.hotelId,
+        pageUrl: parsed.pageUrl,
+        name: parsed.name,
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+      });
+      if (duplicate) {
+        selectHotel(duplicate.id);
+        setStatus(
+          `“${duplicate.name}” is already on your shortlist. Open it from the list to edit.`,
+        );
+      } else {
+        setStatus(
+          parsed.photoUrl
+            ? `Loaded “${parsed.name}” with map coordinates and photo.`
+            : `Loaded “${parsed.name}” with map coordinates.`,
+        );
+      }
     } catch (err) {
       setStatus(err instanceof Error ? err.message : String(err));
     } finally {
@@ -142,9 +156,15 @@ export default function App() {
     }
 
     const hotelId = form.hotelId ? Number(form.hotelId) : null;
-    // New saves: block duplicates of the same tours hotel (same hotelId).
-    if (form.id == null && hotelId != null && Number.isFinite(hotelId)) {
-      const duplicate = findNoteByHotelId(notes, hotelId);
+    // New saves: block duplicates of the same tours hotel.
+    if (form.id == null) {
+      const duplicate = findDuplicateHotel(notes, {
+        hotelId,
+        pageUrl: form.pageUrl,
+        name: form.name,
+        latitude: lat,
+        longitude: lng,
+      });
       if (duplicate) {
         selectHotel(duplicate.id);
         setStatus(

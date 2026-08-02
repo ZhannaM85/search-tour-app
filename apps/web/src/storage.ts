@@ -49,6 +49,67 @@ export function findNoteByHotelId(
   return notes.find((n) => n.hotelId === hotelId);
 }
 
+/** Match an existing shortlist hotel: hotelId first, then pageUrl, then name+coords. */
+export function findDuplicateHotel(
+  notes: HotelNote[],
+  candidate: {
+    hotelId?: number | null;
+    pageUrl?: string;
+    name?: string;
+    latitude?: number;
+    longitude?: number;
+  },
+): HotelNote | undefined {
+  const hotelId =
+    candidate.hotelId != null && Number.isFinite(candidate.hotelId)
+      ? candidate.hotelId
+      : null;
+  if (hotelId != null) {
+    const byId = findNoteByHotelId(notes, hotelId);
+    if (byId) return byId;
+  }
+
+  const pageUrl = normalizePageUrl(candidate.pageUrl);
+  if (pageUrl) {
+    const byUrl = notes.find((n) => normalizePageUrl(n.pageUrl) === pageUrl);
+    if (byUrl) return byUrl;
+  }
+
+  const name = candidate.name?.trim().toLowerCase();
+  const lat = candidate.latitude;
+  const lng = candidate.longitude;
+  if (
+    name &&
+    lat != null &&
+    lng != null &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng)
+  ) {
+    return notes.find(
+      (n) =>
+        n.name.trim().toLowerCase() === name &&
+        sameCoord(n.latitude, lat) &&
+        sameCoord(n.longitude, lng),
+    );
+  }
+
+  return undefined;
+}
+
+function normalizePageUrl(url: string | undefined): string {
+  if (!url?.trim()) return "";
+  try {
+    const u = new URL(url.trim());
+    return `${u.origin}${u.pathname}`.replace(/\/+$/, "").toLowerCase();
+  } catch {
+    return url.trim().replace(/\/+$/, "").toLowerCase();
+  }
+}
+
+function sameCoord(a: number, b: number): boolean {
+  return Math.abs(a - b) < 1e-5;
+}
+
 export function upsertNote(notes: HotelNote[], note: HotelNote): HotelNote[] {
   const idx = notes.findIndex((n) => n.id === note.id);
   if (idx === -1) return [...notes, note];

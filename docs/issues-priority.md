@@ -21,16 +21,17 @@ _Use the same curl response the app already fetches; stop asking for prices by h
 | [#2](https://github.com/ZhannaM85/search-tour-app/issues/2) | 🔍 Pending validation | Auto-fill tour prices (esp. 2 rooms) from curl response | Join `rooms[].roomCount` via `[44]`. Price = full `[88]` (not promo `[42]`). Honor referer `operatorIds` / `mealsIds`. |
 | [#4](https://github.com/ZhannaM85/search-tour-app/issues/4) | 🔍 Pending validation | Store tour operator with each captured price | Per-price operators from aaData[18]; form (read-only + pencil), list, map; persist/export. Awaiting confirmation before closing. |
 | [#3](https://github.com/ZhannaM85/search-tour-app/issues/3) | 🔍 Pending validation | Per-hotel price refresh icon (no bulk refresh) | Stored `tourRequestUrl`+`tourRefererUrl`; refresh prices/operators only; capped history (10) per room count; strikethrough flash. Awaiting confirmation before closing. |
-| [#7](https://github.com/ZhannaM85/search-tour-app/issues/7) | ⬜ Open | Populate hotel stars, rating, and vote count | **Investigate first:** available in GetTours `aaData` and/or hotel-page SSR? Then persist + show (e.g. `5★ · 9.4 (233)`) |
+| [#7](https://github.com/ZhannaM85/search-tour-app/issues/7) | 🔍 Pending validation | Populate hotel stars, rating, and vote count | From hotel-page SSR (`category.name`, `rate`, `reviewCount`); not in GetTours IDX. Shown as `5★ · 9.58 (388)` in form/list/map; refresh updates too. |
 
 ---
 
 ## Tier 3 — Edit UX safety
-_Prevent accidental loss of in-progress edits._
+_Prevent accidental loss of in-progress edits and destructive actions._
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
 | [#5](https://github.com/ZhannaM85/search-tour-app/issues/5) | ⬜ Open | Confirm before Cancel edit discards unsaved changes | Modal (or confirm) when Cancel edit would drop dirty form fields |
+| [#10](https://github.com/ZhannaM85/search-tour-app/issues/10) | ⬜ Open | Confirm deletion with an in-app modal | Replace `window.confirm`; share dialog approach with #5 if possible |
 
 ---
 
@@ -40,5 +41,7 @@ _Small presentation fixes from live use._
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
 | [#6](https://github.com/ZhannaM85/search-tour-app/issues/6) | ⬜ Open | Sort displayed room prices by room count (1 → 2 → 3) | Map popup currently shows 2, then 3, then 1; list should stay consistent |
+| [#8](https://github.com/ZhannaM85/search-tour-app/issues/8) | ⬜ Open | Add sorting by hotel name | New sort mode in dropdown + `sortHotels` (A→Z; localeCompare) |
+| [#9](https://github.com/ZhannaM85/search-tour-app/issues/9) | ⬜ Open | Replace row actions Refresh/Edit/Delete/Open with icons | Icon buttons with aria-labels; same behaviors |
 
 ---

@@ -1,6 +1,16 @@
 import type { HotelNote } from "./types";
 import { parsePriceDigits } from "./formatPrice";
 
+export type SortField =
+  | "recent"
+  | "name"
+  | "rating"
+  | "one"
+  | "two"
+  | "three";
+
+export type SortDir = "asc" | "desc";
+
 export type SortMode =
   | "recent-desc"
   | "recent-asc"
@@ -14,6 +24,33 @@ export type SortMode =
   | "two-desc"
   | "three-asc"
   | "three-desc";
+
+/** Default direction when switching to a sort field. */
+export function defaultSortDir(field: SortField): SortDir {
+  switch (field) {
+    case "name":
+    case "one":
+    case "two":
+    case "three":
+      return "asc";
+    case "recent":
+    case "rating":
+    default:
+      return "desc";
+  }
+}
+
+export function toSortMode(field: SortField, dir: SortDir): SortMode {
+  return `${field}-${dir}` as SortMode;
+}
+
+export function sortFieldFromMode(mode: SortMode): SortField {
+  return mode.replace(/-(asc|desc)$/, "") as SortField;
+}
+
+export function sortDirFromMode(mode: SortMode): SortDir {
+  return mode.endsWith("-asc") ? "asc" : "desc";
+}
 
 function priceNumber(raw: string): number | null {
   const digits = parsePriceDigits(raw);

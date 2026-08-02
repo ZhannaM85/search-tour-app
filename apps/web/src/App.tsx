@@ -11,7 +11,16 @@ import { parseTourCurl, refreshHotelPrices } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
-import { sortHotels, type SortMode } from "./sortHotels";
+import {
+  defaultSortDir,
+  sortDirFromMode,
+  sortFieldFromMode,
+  sortHotels,
+  toSortMode,
+  type SortField,
+  type SortMode,
+} from "./sortHotels";
+import { RecentSortIcon } from "./SortIcons";
 import {
   findDuplicateHotel,
   loadNotes,
@@ -275,6 +284,24 @@ export default function App() {
         : n,
     );
   }, [sorted, form.id, form.stars, form.rating, form.reviewCount]);
+
+  const sortField = sortFieldFromMode(sortMode);
+  const sortDir = sortDirFromMode(sortMode);
+
+  function selectSortField(field: SortField) {
+    if (field === sortField) {
+      setSortMode(toSortMode(field, sortDir === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortMode(toSortMode(field, defaultSortDir(field)));
+  }
+
+  const sortChipClass = (active: boolean) =>
+    `inline-flex min-w-[2.25rem] items-center justify-center gap-1 rounded-xl border px-2.5 py-1.5 text-sm font-medium ${
+      active
+        ? "border-teal-500 bg-teal-50 text-teal-800"
+        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+    }`;
 
   const favoriteCount = useMemo(
     () => notes.filter((n) => n.favorite).length,
@@ -1104,19 +1131,85 @@ export default function App() {
               {listFiltered ? ` of ${notes.length}` : ""})
             </h2>
             <div className="flex flex-wrap gap-2">
+              <div
+                className="inline-flex items-center gap-1"
+                role="group"
+                aria-label="Sort by recent, name, or rating"
+              >
+                <button
+                  type="button"
+                  className={sortChipClass(sortField === "recent")}
+                  aria-pressed={sortField === "recent"}
+                  title={
+                    sortField === "recent"
+                      ? sortDir === "desc"
+                        ? "Recent: newest first — click for oldest first"
+                        : "Recent: oldest first — click for newest first"
+                      : "Sort by recent"
+                  }
+                  aria-label="Sort by recent"
+                  onClick={() => selectSortField("recent")}
+                >
+                  <RecentSortIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className={sortChipClass(sortField === "name")}
+                  aria-pressed={sortField === "name"}
+                  title={
+                    sortField === "name"
+                      ? sortDir === "asc"
+                        ? "Name: A → Z — click for Z → A"
+                        : "Name: Z → A — click for A → Z"
+                      : "Sort by name"
+                  }
+                  aria-label="Sort by name"
+                  onClick={() => selectSortField("name")}
+                >
+                  <span className="text-xs font-semibold tracking-tight">
+                    {sortField === "name" && sortDir === "desc" ? "Z–A" : "A–Z"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={sortChipClass(sortField === "rating")}
+                  aria-pressed={sortField === "rating"}
+                  title={
+                    sortField === "rating"
+                      ? sortDir === "desc"
+                        ? "Rating: high → low — click for low → high"
+                        : "Rating: low → high — click for high → low"
+                      : "Sort by rating"
+                  }
+                  aria-label="Sort by rating"
+                  onClick={() => selectSortField("rating")}
+                >
+                  <StarIcon
+                    filled={sortField === "rating"}
+                    className="h-4 w-4"
+                  />
+                </button>
+              </div>
               <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
-                <span className="sr-only">Sort by</span>
+                <span className="sr-only">Sort by room price</span>
                 <select
-                  value={sortMode}
-                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  value={
+                    sortField === "one" ||
+                    sortField === "two" ||
+                    sortField === "three"
+                      ? sortMode
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) return;
+                    setSortMode(v as SortMode);
+                  }}
                   className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
                 >
-                  <option value="recent-desc">Recent: newest first</option>
-                  <option value="recent-asc">Recent: oldest first</option>
-                  <option value="name-asc">Name: A → Z</option>
-                  <option value="name-desc">Name: Z → A</option>
-                  <option value="rating-desc">Rating: high → low</option>
-                  <option value="rating-asc">Rating: low → high</option>
+                  <option value="" disabled>
+                    Price sort…
+                  </option>
                   <option value="one-asc">1 room: low → high</option>
                   <option value="one-desc">1 room: high → low</option>
                   <option value="two-asc">2 rooms: low → high</option>

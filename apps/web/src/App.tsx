@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ConfirmDialog from "./ConfirmDialog";
 import HotelsMap from "./HotelsMap";
 import OperatorField from "./OperatorField";
@@ -9,7 +9,7 @@ import StarIcon from "./StarIcon";
 import TrashIcon from "./TrashIcon";
 import ThumbsDownIcon from "./ThumbsDownIcon";
 import { parseTourCurl, refreshHotelPrices } from "./api";
-import { downloadBackup, readBackupFile } from "./backup";
+import { downloadBackup, parseBackupJson, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
 import {
@@ -35,9 +35,19 @@ import {
 import type { HotelNote, PriceHistoryEntry } from "./types";
 import { formatHotelQuality, historyAfterPriceChange } from "./types";
 import {
+  applyViewerPrefs,
+  loadViewerPrefs,
+  saveViewerPrefs,
+  setViewerDisliked,
+  setViewerFavorite,
+} from "./viewerPrefs";
+import {
   ratingPriorFromHotels,
   weightedRating,
 } from "./weightedRating";
+
+/** Read-only catalog viewer (local `dev:viewer` or GitHub Pages). */
+const isPublicViewer = import.meta.env.VITE_PUBLIC_VIEWER === "true";
 
 type FormState = {
   id: string | null;
@@ -195,6 +205,7 @@ function formatPriceSlot(
 }
 
 function bootstrapNotes(): { notes: HotelNote[]; filled: number } {
+  if (isPublicViewer) return { notes: [], filled: 0 };
   const loaded = loadNotes();
   const { notes, filled } = fillMissingPhotos(loaded);
   if (filled > 0) saveNotes(notes as HotelNote[]);
@@ -205,11 +216,14 @@ const initialBoot = bootstrapNotes();
 
 export default function App() {
   const [notes, setNotes] = useState<HotelNote[]>(initialBoot.notes);
+  const [catalogReady, setCatalogReady] = useState(!isPublicViewer);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [status, setStatus] = useState(
-    initialBoot.filled > 0
-      ? `Restored photos for ${initialBoot.filled} previously saved hotel(s).`
-      : "Paste a tours curl, then fill prices and notes.",
+    isPublicViewer
+      ? "Loading shortlist…"
+      : initialBoot.filled > 0
+        ? `Restored photos for ${initialBoot.filled} previously saved hotel(s).`
+        : "Paste a tours curl, then fill prices and notes.",
   );
   const [busy, setBusy] = useState(false);
   /** Bumps when form is reset or operators are (re)loaded from the API — locks operator fields. */
@@ -240,6 +254,66 @@ export default function App() {
   const [cancelEditConfirm, setCancelEditConfirm] = useState(false);
   const [editBaseline, setEditBaseline] = useState<EditBaseline | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isPublicViewer) return;
+    let cancelled = false;
+    const url = `${import.meta.env.BASE_URL}shortlist.json`;
+    (async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        let hotels = parseBackupJson(text);
+        let fromLocalPreview = false;
+        // Local convenience: empty committed snapshot → preview full-app shortlist.
+        if (hotels.length === 0) {
+          const local = loadNotes();
+          if (local.length > 0) {
+            hotels = local;
+            fromLocalPreview = true;
+          }
+        }
+        if (cancelled) return;
+        const prefs = loadViewerPrefs();
+        setNotes(applyViewerPrefs(hotels, prefs));
+        setCatalogReady(true);
+        if (hotels.length === 0) {
+          setStatus(
+            "No hotels found in this browser for localhost:5174. Stop the full app, run npm run dev:viewer (same port), or Export → prepare:public-shortlist.",
+          );
+        } else if (fromLocalPreview) {
+          setStatus(
+            `Previewing ${hotels.length} hotel(s) from your full-app shortlist. Favorites/dislikes here stay in this browser. Before publishing: Export → prepare:public-shortlist.`,
+          );
+        } else {
+          setStatus(
+            `Showing ${hotels.length} hotel(s). Favorites and dislikes stay in this browser.`,
+          );
+        }
+      } catch (err) {
+        if (cancelled) return;
+        // Still try local shortlist if the JSON file failed to load.
+        const local = loadNotes();
+        if (local.length > 0) {
+          const prefs = loadViewerPrefs();
+          setNotes(applyViewerPrefs(local, prefs));
+          setCatalogReady(true);
+          setStatus(
+            `Previewing ${local.length} hotel(s) from your full-app shortlist (could not load shortlist.json).`,
+          );
+          return;
+        }
+        setCatalogReady(true);
+        setStatus(
+          `Could not load shortlist.json: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const ratingPrior = useMemo(() => ratingPriorFromHotels(notes), [notes]);
 
@@ -707,6 +781,19 @@ export default function App() {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
     const nextFavorite = !note.favorite;
+
+    if (isPublicViewer) {
+      const prefs = setViewerFavorite(loadViewerPrefs(), id, nextFavorite);
+      saveViewerPrefs(prefs);
+      setNotes((prev) => applyViewerPrefs(prev, prefs));
+      setStatus(
+        nextFavorite
+          ? `Marked “${note.name}” as favorite (saved in this browser).`
+          : `Removed “${note.name}” from favorites.`,
+      );
+      return;
+    }
+
     const next = upsertNote(notes, {
       ...note,
       favorite: nextFavorite,
@@ -732,6 +819,19 @@ export default function App() {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
     const nextDisliked = !note.disliked;
+
+    if (isPublicViewer) {
+      const prefs = setViewerDisliked(loadViewerPrefs(), id, nextDisliked);
+      saveViewerPrefs(prefs);
+      setNotes((prev) => applyViewerPrefs(prev, prefs));
+      setStatus(
+        nextDisliked
+          ? `Moved “${note.name}” to the bottom (saved in this browser).`
+          : `Restored “${note.name}” to normal ranking.`,
+      );
+      return;
+    }
+
     const next = upsertNote(notes, {
       ...note,
       disliked: nextDisliked,
@@ -941,17 +1041,22 @@ export default function App() {
       <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
         <header>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-            Personal shortlist
+            {isPublicViewer ? "Shared shortlist" : "Personal shortlist"}
           </p>
           <h1 className="mt-1 text-3xl font-bold text-slate-900">
             Hotel shortlist
           </h1>
           <p className="mt-2 text-slate-600">
-            You curate hotels after checking them yourself. Paste a tours curl to
-            fill name and coordinates, then add prices and notes.
+            {isPublicViewer
+              ? "Browse the published hotel list and map. Star or dislike hotels — your choices stay in this browser only."
+              : "You curate hotels after checking them yourself. Paste a tours curl to fill name and coordinates, then add prices and notes."}
           </p>
+          {isPublicViewer ? (
+            <p className="mt-2 text-sm text-slate-500">{status}</p>
+          ) : null}
         </header>
 
+        {!isPublicViewer ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">
             {form.id ? "Edit hotel" : "Add hotel"}
@@ -1232,11 +1337,12 @@ export default function App() {
 
           <p className="mt-3 text-sm text-slate-600">{status}</p>
         </section>
+        ) : null}
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-slate-900">
-              Saved hotels ({sorted.length}
+              {isPublicViewer ? "Hotels" : "Saved hotels"} ({sorted.length}
               {listFiltered ? ` of ${notes.length}` : ""})
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -1382,6 +1488,8 @@ export default function App() {
                 Favorites only
                 {favoriteCount > 0 ? ` (${favoriteCount})` : ""}
               </button>
+              {!isPublicViewer ? (
+                <>
               <button
                 type="button"
                 onClick={handleExport}
@@ -1403,6 +1511,8 @@ export default function App() {
                 className="hidden"
                 onChange={(e) => handleImportFile(e.target.files?.[0])}
               />
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -1493,7 +1603,11 @@ export default function App() {
 
           {notes.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">
-              None yet. Export downloads a backup JSON; Import restores it.
+              {isPublicViewer
+                ? catalogReady
+                  ? "No hotels here yet. The viewer shares data with the full app only on the same port (5174) — stop npm run dev:web, then npm run dev:viewer. Or Export from the full app and run prepare:public-shortlist."
+                  : "Loading…"
+                : "None yet. Export downloads a backup JSON; Import restores it."}
             </p>
           ) : sorted.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">
@@ -1638,6 +1752,8 @@ export default function App() {
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col items-center gap-0.5">
+                      {!isPublicViewer ? (
+                        <>
                       <button
                         type="button"
                         className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1689,6 +1805,8 @@ export default function App() {
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
+                        </>
+                      ) : null}
                       {n.pageUrl ? (
                         <a
                           className="rounded p-1 text-teal-600 hover:bg-teal-50 hover:text-teal-800"
@@ -1721,6 +1839,8 @@ export default function App() {
         />
       </section>
 
+      {!isPublicViewer ? (
+        <>
       <ConfirmDialog
         open={deleteConfirm != null}
         title="Delete hotel?"
@@ -1744,6 +1864,8 @@ export default function App() {
         onConfirm={() => clearEditForm()}
         onCancel={() => setCancelEditConfirm(false)}
       />
+        </>
+      ) : null}
     </div>
   );
 }

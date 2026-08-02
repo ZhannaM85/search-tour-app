@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:viewer": "vite --mode viewer --port 5174",
     "build": "tsc -b && vite build",
+    "build:viewer": "tsc -b && vite build --mode viewer",
+    "build:pages": "tsc -b && vite build --mode pages",
     "preview": "vite preview",
+    "preview:pages": "vite preview --mode pages",
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {

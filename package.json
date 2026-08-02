@@ -9,7 +9,11 @@
     "dev": "npm run dev:api",
     "dev:api": "npm run dev -w @search-tour/api",
     "dev:web": "npm run dev -w @search-tour/web",
+    "dev:viewer": "npm run dev:viewer -w @search-tour/web",
     "build": "npm run build -w @search-tour/api && npm run build -w @search-tour/web",
+    "build:viewer": "npm run build:viewer -w @search-tour/web",
+    "build:pages": "npm run build:pages -w @search-tour/web",
+    "prepare:public-shortlist": "node scripts/prepare-public-shortlist.mjs",
     "typecheck": "npm run typecheck -w @search-tour/api && npm run typecheck -w @search-tour/web"
   }
 }

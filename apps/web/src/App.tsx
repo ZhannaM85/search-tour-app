@@ -198,6 +198,12 @@ export default function App() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [nameQuery, setNameQuery] = useState("");
+  /** Floor band of guest rating: 8 → 8.0–8.99, 9 → 9.0–9.99. */
+  const [ratingBand, setRatingBand] = useState<"all" | "8" | "9">("all");
+  /** Which room price the max-price filter uses. */
+  const [priceFilterRoom, setPriceFilterRoom] = useState<"1" | "2" | "3">("2");
+  /** Max price digits; empty = no price filter. */
+  const [priceMax, setPriceMax] = useState("");
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [priceFlashById, setPriceFlashById] = useState<
     Record<string, PriceFlash>
@@ -212,15 +218,48 @@ export default function App() {
 
   const sorted = useMemo(() => {
     const q = nameQuery.trim().toLowerCase();
+    const maxDigits = parsePriceDigits(priceMax);
+    const maxPrice = maxDigits ? Number(maxDigits) : null;
     let list = favoritesOnly ? notes.filter((n) => n.favorite) : notes;
     if (q) {
       list = list.filter((n) => n.name.toLowerCase().includes(q));
     }
+    if (ratingBand !== "all") {
+      const band = Number(ratingBand);
+      list = list.filter(
+        (n) => n.rating != null && Math.floor(n.rating) === band,
+      );
+    }
+    if (maxPrice != null && Number.isFinite(maxPrice)) {
+      list = list.filter((n) => {
+        const raw =
+          priceFilterRoom === "1"
+            ? n.priceOneRoom
+            : priceFilterRoom === "2"
+              ? n.priceTwoRooms
+              : n.priceThreeRooms;
+        const digits = parsePriceDigits(raw);
+        if (!digits) return false;
+        const price = Number(digits);
+        return Number.isFinite(price) && price <= maxPrice;
+      });
+    }
     return sortHotels(list, sortMode);
-  }, [notes, favoritesOnly, sortMode, nameQuery]);
+  }, [
+    notes,
+    favoritesOnly,
+    sortMode,
+    nameQuery,
+    ratingBand,
+    priceFilterRoom,
+    priceMax,
+  ]);
 
   const listFiltered =
-    favoritesOnly || nameQuery.trim().length > 0;
+    favoritesOnly ||
+    nameQuery.trim().length > 0 ||
+    ratingBand !== "all" ||
+    parsePriceDigits(priceMax).length > 0;
 
   /** Map popup reads saved notes; while editing, overlay form quality so rating matches the form. */
   const mapNotes = useMemo(() => {
@@ -1127,16 +1166,63 @@ export default function App() {
           </div>
 
           {notes.length > 0 ? (
-            <label className="mt-3 block text-sm text-slate-700">
-              <span className="sr-only">Search by hotel name</span>
-              <input
-                type="search"
-                value={nameQuery}
-                onChange={(e) => setNameQuery(e.target.value)}
-                placeholder="Search by hotel name…"
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-              />
-            </label>
+            <div className="mt-3 space-y-2">
+              <label className="block text-sm text-slate-700">
+                <span className="sr-only">Search by hotel name</span>
+                <input
+                  type="search"
+                  value={nameQuery}
+                  onChange={(e) => setNameQuery(e.target.value)}
+                  placeholder="Search by hotel name…"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                  <span className="sr-only">Filter by rating</span>
+                  <select
+                    value={ratingBand}
+                    onChange={(e) =>
+                      setRatingBand(e.target.value as "all" | "8" | "9")
+                    }
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+                  >
+                    <option value="all">Rating: any</option>
+                    <option value="9">Rating: 9.x</option>
+                    <option value="8">Rating: 8.x</option>
+                  </select>
+                </label>
+                <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                  <span className="sr-only">Room type for price filter</span>
+                  <select
+                    value={priceFilterRoom}
+                    onChange={(e) =>
+                      setPriceFilterRoom(e.target.value as "1" | "2" | "3")
+                    }
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+                  >
+                    <option value="1">Price ≤ · 1 room</option>
+                    <option value="2">Price ≤ · 2 rooms</option>
+                    <option value="3">Price ≤ · 3 rooms</option>
+                  </select>
+                </label>
+                <label className="relative inline-flex min-w-[9rem] flex-1 items-center text-sm text-slate-700 sm:max-w-[12rem]">
+                  <span className="sr-only">Maximum price</span>
+                  <input
+                    inputMode="numeric"
+                    value={formatPriceInput(priceMax)}
+                    onChange={(e) =>
+                      setPriceMax(parsePriceDigits(e.target.value))
+                    }
+                    placeholder="Max price"
+                    className="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-3 pr-7 text-sm"
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-slate-400">
+                    ₽
+                  </span>
+                </label>
+              </div>
+            </div>
           ) : null}
 
           {notes.length === 0 ? (
@@ -1145,11 +1231,9 @@ export default function App() {
             </p>
           ) : sorted.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">
-              {nameQuery.trim()
-                ? `No hotels match “${nameQuery.trim()}”.`
-                : favoritesOnly
-                  ? "No favorites yet. Tap the star on a hotel to mark one."
-                  : "No hotels to show."}
+              {listFiltered
+                ? "No hotels match the current filters."
+                : "No hotels to show."}
             </p>
           ) : (
             <ul className="mt-3 space-y-3">

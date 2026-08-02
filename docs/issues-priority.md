@@ -32,3 +32,12 @@ _Prevent accidental loss of in-progress edits._
 | [#5](https://github.com/ZhannaM85/search-tour-app/issues/5) | ⬜ Open | Confirm before Cancel edit discards unsaved changes | Modal (or confirm) when Cancel edit would drop dirty form fields |
 
 ---
+
+## Tier 4 — Display polish
+_Small presentation fixes from live use._
+
+| # | Status | Issue | Notes |
+|---|--------|-------|-------|
+| [#6](https://github.com/ZhannaM85/search-tour-app/issues/6) | ⬜ Open | Sort displayed room prices by room count (1 → 2 → 3) | Map popup currently shows 2, then 3, then 1; list should stay consistent |
+
+---

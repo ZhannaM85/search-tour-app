@@ -1,4 +1,6 @@
 const IDX = {
+  /** Encrypted / numeric tour-operator id (e.g. 7 = Biblio Globus, 19 = Anex). */
+  OPERATOR_ID: 1,
   HOTEL_SLUG: 2,
   HOTEL_ID: 3,
   HOTEL_NAME: 7,
@@ -6,10 +8,18 @@ const IDX = {
   OPERATOR_NAME: 18,
   /** Protocol-relative hotel thumbnail, e.g. `//host/i/p/{id}_30.jpg` */
   PHOTO: 29,
-  /** Full tour price in request currency (number). */
+  /** System meal id (joins referer `mealsIds`). */
+  MEAL_ID: 41,
+  /** Tour price number (often promo/net; may be lower than the site button). */
   PRICE: 42,
   /** System room-type id — joins to hotel page `rooms[].id`. */
   ROOM_TYPE_ID: 44,
+  /**
+   * Full tour price incl. operator fees — matches the amount shown on sletat.ru.
+   * Prefer this over PRICE when > 0 (promo rows differ: 42 < 88). When 0, the
+   * site typically does not show that offer's net price as the button amount.
+   */
+  FULL_PRICE: 88,
   LAT: 92,
   LNG: 93,
 } as const;
@@ -172,10 +182,60 @@ type PriceWithOperator = {
   operator: string | null;
 };
 
+export type TourPriceFilters = {
+  /** From referer `operatorIds` — when set, only these operators. */
+  operatorIds?: Set<number>;
+  /** From referer `mealsIds` — when set, only these meal ids. */
+  mealIds?: Set<number>;
+};
+
+/** Parse `operatorIds` / `mealsIds` from the hotel-page search referer. */
+export function parseRefererPriceFilters(refererUrl: string): TourPriceFilters {
+  const out: TourPriceFilters = {};
+  if (!refererUrl) return out;
+  try {
+    const u = new URL(refererUrl);
+    const operators = u.searchParams.get("operatorIds");
+    if (operators) {
+      const ids = operators
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n));
+      if (ids.length) out.operatorIds = new Set(ids);
+    }
+    const meals = u.searchParams.get("mealsIds");
+    if (meals) {
+      const ids = meals
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n));
+      if (ids.length) out.mealIds = new Set(ids);
+    }
+  } catch {
+    /* ignore bad referer */
+  }
+  return out;
+}
+
+/**
+ * Prefer full site price `[88]` when > 0.
+ * If `[88]` is explicitly 0, skip (net/promo-only row not shown as the button).
+ * Otherwise fall back to `[42]`.
+ */
+function tourPrice(row: unknown[]): number | null {
+  const full = asNumber(row, IDX.FULL_PRICE);
+  if (full != null && full > 0) return full;
+  if (full === 0) return null;
+  const price = asNumber(row, IDX.PRICE);
+  if (price != null && price > 0) return price;
+  return null;
+}
+
 function cheapestPricesByRoomCount(
   aaData: unknown[],
   hotelId: number | null,
   catalog: Map<number, RoomCatalogEntry>,
+  filters: TourPriceFilters = {},
 ): {
   priceOneRoom: number | null;
   priceTwoRooms: number | null;
@@ -192,16 +252,31 @@ function cheapestPricesByRoomCount(
     if (!Array.isArray(raw)) continue;
     if (hotelId != null && asNumber(raw, IDX.HOTEL_ID) !== hotelId) continue;
 
+    if (filters.operatorIds && filters.operatorIds.size > 0) {
+      const opId = asNumber(raw, IDX.OPERATOR_ID);
+      if (opId == null || !filters.operatorIds.has(opId)) continue;
+    }
+    if (filters.mealIds && filters.mealIds.size > 0) {
+      const mealId = asNumber(raw, IDX.MEAL_ID);
+      if (mealId == null || !filters.mealIds.has(mealId)) continue;
+    }
+
     const roomTypeId = asNumber(raw, IDX.ROOM_TYPE_ID);
-    const price = asNumber(raw, IDX.PRICE);
-    if (roomTypeId == null || price == null || price <= 0) continue;
+    const price = tourPrice(raw);
+    if (roomTypeId == null || price == null) continue;
 
     const room = catalog.get(roomTypeId);
     if (!room) continue;
 
     const operator = asString(raw, IDX.OPERATOR_NAME).trim() || null;
     const slot =
-      room.roomCount === 1 ? one : room.roomCount === 2 ? two : room.roomCount === 3 ? three : null;
+      room.roomCount === 1
+        ? one
+        : room.roomCount === 2
+          ? two
+          : room.roomCount === 3
+            ? three
+            : null;
     if (!slot) continue;
     if (slot.price == null || price < slot.price) {
       slot.price = price;
@@ -256,9 +331,10 @@ export function extractFromTourRows(
   }
 
   const hotelId = asNumber(row, IDX.HOTEL_ID);
+  const filters = parseRefererPriceFilters(refererUrl);
   const prices =
     roomCatalog && roomCatalog.size > 0
-      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog)
+      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog, filters)
       : {
           priceOneRoom: null,
           priceTwoRooms: null,

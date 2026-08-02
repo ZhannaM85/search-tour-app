@@ -100,6 +100,12 @@ function HotelMarker({
               <div className="text-slate-600">{quality}</div>
             ) : null;
           })()}
+          {note.priceOneRoom ? (
+            <div>
+              1 room: {formatPrice(note.priceOneRoom)}
+              {note.operatorOneRoom ? ` (${note.operatorOneRoom})` : ""}
+            </div>
+          ) : null}
           {note.priceTwoRooms ? (
             <div>
               2 rooms: {formatPrice(note.priceTwoRooms)}
@@ -110,12 +116,6 @@ function HotelMarker({
             <div>
               3 rooms: {formatPrice(note.priceThreeRooms)}
               {note.operatorThreeRooms ? ` (${note.operatorThreeRooms})` : ""}
-            </div>
-          ) : null}
-          {note.priceOneRoom ? (
-            <div>
-              1 room: {formatPrice(note.priceOneRoom)}
-              {note.operatorOneRoom ? ` (${note.operatorOneRoom})` : ""}
             </div>
           ) : null}
           {note.notes ? (

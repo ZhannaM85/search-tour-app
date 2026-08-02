@@ -3,6 +3,7 @@ import { parsePriceDigits } from "./formatPrice";
 
 export type SortMode =
   | "recent"
+  | "name"
   | "one-asc"
   | "one-desc"
   | "two-asc"
@@ -27,9 +28,20 @@ function comparePrices(aRaw: string, bRaw: string, ascending: boolean): number {
   return ascending ? a - b : b - a;
 }
 
+function compareFavoritesFirst(a: HotelNote, b: HotelNote): number {
+  if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+  return 0;
+}
+
 export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
   const list = [...notes];
   switch (mode) {
+    case "name":
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
     case "one-asc":
       return list.sort((a, b) =>
         comparePrices(a.priceOneRoom, b.priceOneRoom, true),
@@ -57,7 +69,8 @@ export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
     case "recent":
     default:
       return list.sort((a, b) => {
-        if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
         return b.updatedAt.localeCompare(a.updatedAt);
       });
   }

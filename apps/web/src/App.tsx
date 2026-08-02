@@ -897,6 +897,7 @@ export default function App() {
                   className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
                 >
                   <option value="recent">Sort: recent</option>
+                  <option value="name">Sort: name</option>
                   <option value="one-asc">1 room: low → high</option>
                   <option value="one-desc">1 room: high → low</option>
                   <option value="two-asc">2 rooms: low → high</option>

@@ -23,7 +23,12 @@ function isHotelNote(value: unknown): value is HotelNote {
     (n.hotelId === null || typeof n.hotelId === "number") &&
     (n.favorite === undefined || typeof n.favorite === "boolean") &&
     (n.photoUrl === undefined || typeof n.photoUrl === "string") &&
-    (n.priceThreeRooms === undefined || typeof n.priceThreeRooms === "string")
+    (n.priceThreeRooms === undefined || typeof n.priceThreeRooms === "string") &&
+    (n.operatorOneRoom === undefined || typeof n.operatorOneRoom === "string") &&
+    (n.operatorTwoRooms === undefined ||
+      typeof n.operatorTwoRooms === "string") &&
+    (n.operatorThreeRooms === undefined ||
+      typeof n.operatorThreeRooms === "string")
   );
 }
 
@@ -34,6 +39,12 @@ function withDefaults(notes: HotelNote[]): HotelNote[] {
     photoUrl: typeof n.photoUrl === "string" ? n.photoUrl : "",
     priceThreeRooms:
       typeof n.priceThreeRooms === "string" ? n.priceThreeRooms : "",
+    operatorOneRoom:
+      typeof n.operatorOneRoom === "string" ? n.operatorOneRoom : "",
+    operatorTwoRooms:
+      typeof n.operatorTwoRooms === "string" ? n.operatorTwoRooms : "",
+    operatorThreeRooms:
+      typeof n.operatorThreeRooms === "string" ? n.operatorThreeRooms : "",
   }));
 }
 

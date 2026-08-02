@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import HotelsMap from "./HotelsMap";
+import OperatorField from "./OperatorField";
 import StarIcon from "./StarIcon";
 import { parseTourCurl } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
@@ -28,6 +29,9 @@ type FormState = {
   priceOneRoom: string;
   priceTwoRooms: string;
   priceThreeRooms: string;
+  operatorOneRoom: string;
+  operatorTwoRooms: string;
+  operatorThreeRooms: string;
   notes: string;
   favorite: boolean;
 };
@@ -44,9 +48,18 @@ const emptyForm = (): FormState => ({
   priceOneRoom: "",
   priceTwoRooms: "",
   priceThreeRooms: "",
+  operatorOneRoom: "",
+  operatorTwoRooms: "",
+  operatorThreeRooms: "",
   notes: "",
   favorite: false,
 });
+
+function formatPriceWithOperator(price: string, operator: string): string {
+  const formatted = formatPrice(price);
+  const op = operator.trim();
+  return op ? `${formatted} (${op})` : formatted;
+}
 
 function bootstrapNotes(): { notes: HotelNote[]; filled: number } {
   const loaded = loadNotes();
@@ -66,6 +79,8 @@ export default function App() {
       : "Paste a tours curl, then fill prices and notes.",
   );
   const [busy, setBusy] = useState(false);
+  /** Bumps when form is reset or operators are (re)loaded from the API — locks operator fields. */
+  const [operatorLockKey, setOperatorLockKey] = useState(0);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [focusNonce, setFocusNonce] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -139,9 +154,22 @@ export default function App() {
           parsed.priceThreeRooms != null
             ? String(parsed.priceThreeRooms)
             : (duplicate?.priceThreeRooms ?? f.priceThreeRooms),
+        operatorOneRoom:
+          parsed.priceOneRoom != null
+            ? (parsed.operatorOneRoom ?? "")
+            : (duplicate?.operatorOneRoom ?? f.operatorOneRoom),
+        operatorTwoRooms:
+          parsed.priceTwoRooms != null
+            ? (parsed.operatorTwoRooms ?? "")
+            : (duplicate?.operatorTwoRooms ?? f.operatorTwoRooms),
+        operatorThreeRooms:
+          parsed.priceThreeRooms != null
+            ? (parsed.operatorThreeRooms ?? "")
+            : (duplicate?.operatorThreeRooms ?? f.operatorThreeRooms),
         notes: duplicate?.notes ?? f.notes,
         favorite: duplicate?.favorite ?? f.favorite,
       }));
+      setOperatorLockKey((k) => k + 1);
       if (duplicate) {
         selectHotel(duplicate.id);
         setStatus(
@@ -150,16 +178,27 @@ export default function App() {
       } else {
         const priceBits: string[] = [];
         if (parsed.priceOneRoom != null) {
-          priceBits.push(`1 room ${formatPrice(String(parsed.priceOneRoom))}`);
+          priceBits.push(
+            `1 room ${formatPriceWithOperator(
+              String(parsed.priceOneRoom),
+              parsed.operatorOneRoom ?? "",
+            )}`,
+          );
         }
         if (parsed.priceTwoRooms != null) {
           priceBits.push(
-            `2 rooms ${formatPrice(String(parsed.priceTwoRooms))}`,
+            `2 rooms ${formatPriceWithOperator(
+              String(parsed.priceTwoRooms),
+              parsed.operatorTwoRooms ?? "",
+            )}`,
           );
         }
         if (parsed.priceThreeRooms != null) {
           priceBits.push(
-            `3 rooms ${formatPrice(String(parsed.priceThreeRooms))}`,
+            `3 rooms ${formatPriceWithOperator(
+              String(parsed.priceThreeRooms),
+              parsed.operatorThreeRooms ?? "",
+            )}`,
           );
         }
         const priceMsg =
@@ -222,6 +261,9 @@ export default function App() {
       priceOneRoom: form.priceOneRoom.trim(),
       priceTwoRooms: form.priceTwoRooms.trim(),
       priceThreeRooms: form.priceThreeRooms.trim(),
+      operatorOneRoom: form.operatorOneRoom.trim(),
+      operatorTwoRooms: form.operatorTwoRooms.trim(),
+      operatorThreeRooms: form.operatorThreeRooms.trim(),
       notes: form.notes.trim(),
       favorite: form.favorite,
       createdAt: existing?.createdAt ?? now,
@@ -232,6 +274,7 @@ export default function App() {
     persist(next);
     selectHotel(id);
     setForm(emptyForm());
+    setOperatorLockKey((k) => k + 1);
     setStatus(
       existing || duplicate
         ? `Updated “${note.name}”.`
@@ -254,9 +297,13 @@ export default function App() {
       priceOneRoom: note.priceOneRoom,
       priceTwoRooms: note.priceTwoRooms,
       priceThreeRooms: note.priceThreeRooms,
+      operatorOneRoom: note.operatorOneRoom,
+      operatorTwoRooms: note.operatorTwoRooms,
+      operatorThreeRooms: note.operatorThreeRooms,
       notes: note.notes,
       favorite: note.favorite,
     });
+    setOperatorLockKey((k) => k + 1);
     selectHotel(note.id);
     setStatus(`Editing “${note.name}”.`);
   }
@@ -266,7 +313,10 @@ export default function App() {
     if (!note) return;
     if (!confirm(`Remove “${note.name}”?`)) return;
     persist(removeNote(notes, id));
-    if (form.id === id) setForm(emptyForm());
+    if (form.id === id) {
+      setForm(emptyForm());
+      setOperatorLockKey((k) => k + 1);
+    }
     setStatus(`Removed “${note.name}”.`);
   }
 
@@ -313,6 +363,7 @@ export default function App() {
       }
       persist(imported);
       setForm(emptyForm());
+      setOperatorLockKey((k) => k + 1);
       setFocusId(null);
       setStatus(`Imported ${imported.length} hotel(s) from backup.`);
     } catch (err) {
@@ -427,6 +478,12 @@ export default function App() {
                   ₽
                 </span>
               </div>
+              <OperatorField
+                value={form.operatorOneRoom}
+                onChange={(v) => setField("operatorOneRoom", v)}
+                lockKey={`one-${operatorLockKey}`}
+                aria-label="Operator for 1-room price"
+              />
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
@@ -445,6 +502,12 @@ export default function App() {
                   ₽
                 </span>
               </div>
+              <OperatorField
+                value={form.operatorTwoRooms}
+                onChange={(v) => setField("operatorTwoRooms", v)}
+                lockKey={`two-${operatorLockKey}`}
+                aria-label="Operator for 2-room price"
+              />
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
@@ -466,6 +529,12 @@ export default function App() {
                   ₽
                 </span>
               </div>
+              <OperatorField
+                value={form.operatorThreeRooms}
+                onChange={(v) => setField("operatorThreeRooms", v)}
+                lockKey={`three-${operatorLockKey}`}
+                aria-label="Operator for 3-room price"
+              />
             </label>
 
             <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
@@ -474,7 +543,7 @@ export default function App() {
                 className="mt-1 h-28 w-full rounded-xl border border-slate-300 px-3 py-2"
                 value={form.notes}
                 onChange={(e) => setField("notes", e.target.value)}
-                placeholder="Room name, dates, operator, what you liked…"
+                placeholder="Room name, dates, what you liked…"
               />
             </label>
 
@@ -507,6 +576,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setForm(emptyForm());
+                  setOperatorLockKey((k) => k + 1);
                   setStatus("Form cleared.");
                 }}
                 className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm"
@@ -646,13 +716,13 @@ export default function App() {
                       <div className="mt-1 text-sm text-slate-600">
                         {[
                           n.priceOneRoom
-                            ? `1 room: ${formatPrice(n.priceOneRoom)}`
+                            ? `1 room: ${formatPriceWithOperator(n.priceOneRoom, n.operatorOneRoom)}`
                             : null,
                           n.priceTwoRooms
-                            ? `2 rooms: ${formatPrice(n.priceTwoRooms)}`
+                            ? `2 rooms: ${formatPriceWithOperator(n.priceTwoRooms, n.operatorTwoRooms)}`
                             : null,
                           n.priceThreeRooms
-                            ? `3 rooms: ${formatPrice(n.priceThreeRooms)}`
+                            ? `3 rooms: ${formatPriceWithOperator(n.priceThreeRooms, n.operatorThreeRooms)}`
                             : null,
                         ]
                           .filter(Boolean)

@@ -13,6 +13,12 @@ export type ParsedHotel = {
   priceTwoRooms: number | null;
   /** Cheapest 3-room tour price (joined via hotel room catalog). */
   priceThreeRooms: number | null;
+  /** Operator name for the winning 1-room offer (aaData[18]). */
+  operatorOneRoom: string | null;
+  /** Operator name for the winning 2-room offer (aaData[18]). */
+  operatorTwoRooms: string | null;
+  /** Operator name for the winning 3-room offer (aaData[18]). */
+  operatorThreeRooms: string | null;
   refererUrl?: string;
 };
 

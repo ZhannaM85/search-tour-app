@@ -94,13 +94,22 @@ function HotelMarker({
             <span>{note.name}</span>
           </div>
           {note.priceTwoRooms ? (
-            <div>2 rooms: {formatPrice(note.priceTwoRooms)}</div>
+            <div>
+              2 rooms: {formatPrice(note.priceTwoRooms)}
+              {note.operatorTwoRooms ? ` (${note.operatorTwoRooms})` : ""}
+            </div>
           ) : null}
           {note.priceThreeRooms ? (
-            <div>3 rooms: {formatPrice(note.priceThreeRooms)}</div>
+            <div>
+              3 rooms: {formatPrice(note.priceThreeRooms)}
+              {note.operatorThreeRooms ? ` (${note.operatorThreeRooms})` : ""}
+            </div>
           ) : null}
           {note.priceOneRoom ? (
-            <div>1 room: {formatPrice(note.priceOneRoom)}</div>
+            <div>
+              1 room: {formatPrice(note.priceOneRoom)}
+              {note.operatorOneRoom ? ` (${note.operatorOneRoom})` : ""}
+            </div>
           ) : null}
           {note.notes ? (
             <div className="mt-1 text-slate-600">{note.notes}</div>

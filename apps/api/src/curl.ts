@@ -2,6 +2,8 @@ const IDX = {
   HOTEL_SLUG: 2,
   HOTEL_ID: 3,
   HOTEL_NAME: 7,
+  /** Tour operator display name (e.g. "Biblio Globus", "Anex"). */
+  OPERATOR_NAME: 18,
   /** Protocol-relative hotel thumbnail, e.g. `//host/i/p/{id}_30.jpg` */
   PHOTO: 29,
   /** Full tour price in request currency (number). */
@@ -165,6 +167,11 @@ export function extractRoomCatalogFromHtml(
   return map;
 }
 
+type PriceWithOperator = {
+  price: number | null;
+  operator: string | null;
+};
+
 function cheapestPricesByRoomCount(
   aaData: unknown[],
   hotelId: number | null,
@@ -173,10 +180,13 @@ function cheapestPricesByRoomCount(
   priceOneRoom: number | null;
   priceTwoRooms: number | null;
   priceThreeRooms: number | null;
+  operatorOneRoom: string | null;
+  operatorTwoRooms: string | null;
+  operatorThreeRooms: string | null;
 } {
-  let priceOneRoom: number | null = null;
-  let priceTwoRooms: number | null = null;
-  let priceThreeRooms: number | null = null;
+  const one: PriceWithOperator = { price: null, operator: null };
+  const two: PriceWithOperator = { price: null, operator: null };
+  const three: PriceWithOperator = { price: null, operator: null };
 
   for (const raw of aaData) {
     if (!Array.isArray(raw)) continue;
@@ -189,18 +199,24 @@ function cheapestPricesByRoomCount(
     const room = catalog.get(roomTypeId);
     if (!room) continue;
 
-    if (room.roomCount === 1) {
-      if (priceOneRoom == null || price < priceOneRoom) priceOneRoom = price;
-    } else if (room.roomCount === 2) {
-      if (priceTwoRooms == null || price < priceTwoRooms) priceTwoRooms = price;
-    } else if (room.roomCount === 3) {
-      if (priceThreeRooms == null || price < priceThreeRooms) {
-        priceThreeRooms = price;
-      }
+    const operator = asString(raw, IDX.OPERATOR_NAME).trim() || null;
+    const slot =
+      room.roomCount === 1 ? one : room.roomCount === 2 ? two : room.roomCount === 3 ? three : null;
+    if (!slot) continue;
+    if (slot.price == null || price < slot.price) {
+      slot.price = price;
+      slot.operator = operator;
     }
   }
 
-  return { priceOneRoom, priceTwoRooms, priceThreeRooms };
+  return {
+    priceOneRoom: one.price,
+    priceTwoRooms: two.price,
+    priceThreeRooms: three.price,
+    operatorOneRoom: one.operator,
+    operatorTwoRooms: two.operator,
+    operatorThreeRooms: three.operator,
+  };
 }
 
 export function extractFromTourRows(
@@ -217,6 +233,9 @@ export function extractFromTourRows(
   priceOneRoom: number | null;
   priceTwoRooms: number | null;
   priceThreeRooms: number | null;
+  operatorOneRoom: string | null;
+  operatorTwoRooms: string | null;
+  operatorThreeRooms: string | null;
 } {
   const root = payload as {
     GetToursResult?: { Data?: { aaData?: unknown[] } };
@@ -244,6 +263,9 @@ export function extractFromTourRows(
           priceOneRoom: null,
           priceTwoRooms: null,
           priceThreeRooms: null,
+          operatorOneRoom: null,
+          operatorTwoRooms: null,
+          operatorThreeRooms: null,
         };
 
   return {
@@ -256,5 +278,8 @@ export function extractFromTourRows(
     priceOneRoom: prices.priceOneRoom,
     priceTwoRooms: prices.priceTwoRooms,
     priceThreeRooms: prices.priceThreeRooms,
+    operatorOneRoom: prices.operatorOneRoom,
+    operatorTwoRooms: prices.operatorTwoRooms,
+    operatorThreeRooms: prices.operatorThreeRooms,
   };
 }

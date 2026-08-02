@@ -33,6 +33,12 @@ function normalizeNote(value: unknown): HotelNote | null {
     priceTwoRooms: typeof n.priceTwoRooms === "string" ? n.priceTwoRooms : "",
     priceThreeRooms:
       typeof n.priceThreeRooms === "string" ? n.priceThreeRooms : "",
+    operatorOneRoom:
+      typeof n.operatorOneRoom === "string" ? n.operatorOneRoom : "",
+    operatorTwoRooms:
+      typeof n.operatorTwoRooms === "string" ? n.operatorTwoRooms : "",
+    operatorThreeRooms:
+      typeof n.operatorThreeRooms === "string" ? n.operatorThreeRooms : "",
     notes: typeof n.notes === "string" ? n.notes : "",
     favorite: Boolean(n.favorite),
     createdAt: typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),

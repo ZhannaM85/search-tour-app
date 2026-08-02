@@ -9,6 +9,12 @@ export type HotelNote = {
   priceOneRoom: string;
   priceTwoRooms: string;
   priceThreeRooms: string;
+  /** Tour operator for the 1-room price offer (auto-filled or manual). */
+  operatorOneRoom: string;
+  /** Tour operator for the 2-room price offer (auto-filled or manual). */
+  operatorTwoRooms: string;
+  /** Tour operator for the 3-room price offer (auto-filled or manual). */
+  operatorThreeRooms: string;
   notes: string;
   favorite: boolean;
   createdAt: string;

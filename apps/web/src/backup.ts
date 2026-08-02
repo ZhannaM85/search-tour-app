@@ -47,7 +47,16 @@ function isHotelNote(value: unknown): value is HotelNote {
     (n.tourRefererUrl === undefined || typeof n.tourRefererUrl === "string") &&
     isHistoryArray(n.priceHistoryOneRoom) &&
     isHistoryArray(n.priceHistoryTwoRooms) &&
-    isHistoryArray(n.priceHistoryThreeRooms)
+    isHistoryArray(n.priceHistoryThreeRooms) &&
+    (n.stars === undefined ||
+      n.stars === null ||
+      typeof n.stars === "number") &&
+    (n.rating === undefined ||
+      n.rating === null ||
+      typeof n.rating === "number") &&
+    (n.reviewCount === undefined ||
+      n.reviewCount === null ||
+      typeof n.reviewCount === "number")
   );
 }
 
@@ -81,6 +90,13 @@ function withDefaults(notes: HotelNote[]): HotelNote[] {
     priceHistoryOneRoom: normalizeHistory(n.priceHistoryOneRoom),
     priceHistoryTwoRooms: normalizeHistory(n.priceHistoryTwoRooms),
     priceHistoryThreeRooms: normalizeHistory(n.priceHistoryThreeRooms),
+    stars: typeof n.stars === "number" && Number.isFinite(n.stars) ? n.stars : null,
+    rating:
+      typeof n.rating === "number" && Number.isFinite(n.rating) ? n.rating : null,
+    reviewCount:
+      typeof n.reviewCount === "number" && Number.isFinite(n.reviewCount)
+        ? n.reviewCount
+        : null,
   }));
 }
 

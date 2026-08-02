@@ -16,7 +16,7 @@ import {
   upsertNote,
 } from "./storage";
 import type { HotelNote, PriceHistoryEntry } from "./types";
-import { prependPriceHistory } from "./types";
+import { formatHotelQuality, prependPriceHistory } from "./types";
 
 type FormState = {
   id: string | null;
@@ -38,6 +38,9 @@ type FormState = {
   priceHistoryOneRoom: PriceHistoryEntry[];
   priceHistoryTwoRooms: PriceHistoryEntry[];
   priceHistoryThreeRooms: PriceHistoryEntry[];
+  stars: number | null;
+  rating: number | null;
+  reviewCount: number | null;
   notes: string;
   favorite: boolean;
 };
@@ -62,6 +65,9 @@ const emptyForm = (): FormState => ({
   priceHistoryOneRoom: [],
   priceHistoryTwoRooms: [],
   priceHistoryThreeRooms: [],
+  stars: null,
+  rating: null,
+  reviewCount: null,
   notes: "",
   favorite: false,
 });
@@ -234,6 +240,9 @@ export default function App() {
           duplicate?.priceHistoryTwoRooms ?? f.priceHistoryTwoRooms,
         priceHistoryThreeRooms:
           duplicate?.priceHistoryThreeRooms ?? f.priceHistoryThreeRooms,
+        stars: parsed.stars ?? duplicate?.stars ?? null,
+        rating: parsed.rating ?? duplicate?.rating ?? null,
+        reviewCount: parsed.reviewCount ?? duplicate?.reviewCount ?? null,
         notes: duplicate?.notes ?? f.notes,
         favorite: duplicate?.favorite ?? f.favorite,
       }));
@@ -348,6 +357,9 @@ export default function App() {
         form.priceHistoryThreeRooms.length > 0
           ? form.priceHistoryThreeRooms
           : (existing?.priceHistoryThreeRooms ?? []),
+      stars: form.stars ?? existing?.stars ?? null,
+      rating: form.rating ?? existing?.rating ?? null,
+      reviewCount: form.reviewCount ?? existing?.reviewCount ?? null,
       notes: form.notes.trim(),
       favorite: form.favorite,
       createdAt: existing?.createdAt ?? now,
@@ -387,6 +399,9 @@ export default function App() {
       tourRequestUrl: note.tourRequestUrl,
       tourRefererUrl: note.tourRefererUrl,
       priceHistoryOneRoom: note.priceHistoryOneRoom,
+      stars: note.stars,
+      rating: note.rating,
+      reviewCount: note.reviewCount,
       priceHistoryTwoRooms: note.priceHistoryTwoRooms,
       priceHistoryThreeRooms: note.priceHistoryThreeRooms,
       notes: note.notes,
@@ -509,7 +524,15 @@ export default function App() {
         refreshed.priceOneRoom != null ||
         refreshed.priceTwoRooms != null ||
         refreshed.priceThreeRooms != null;
-      if (!anyPrice) {
+      const stars = refreshed.stars ?? note.stars;
+      const rating = refreshed.rating ?? note.rating;
+      const reviewCount = refreshed.reviewCount ?? note.reviewCount;
+      const anyQuality =
+        refreshed.stars != null ||
+        refreshed.rating != null ||
+        refreshed.reviewCount != null;
+
+      if (!anyPrice && !anyQuality) {
         setStatus(
           `No matching tour prices found for “${note.name}” — existing prices kept.`,
         );
@@ -527,10 +550,15 @@ export default function App() {
         priceHistoryOneRoom,
         priceHistoryTwoRooms,
         priceHistoryThreeRooms,
+        stars,
+        rating,
+        reviewCount,
         updatedAt: now,
       };
       persist(upsertNote(notes, updated));
-      setPriceFlashById((m) => ({ ...m, [id]: flash }));
+      if (anyPrice) {
+        setPriceFlashById((m) => ({ ...m, [id]: flash }));
+      }
       if (form.id === id) {
         setForm((f) => ({
           ...f,
@@ -543,11 +571,18 @@ export default function App() {
           priceHistoryOneRoom,
           priceHistoryTwoRooms,
           priceHistoryThreeRooms,
+          stars,
+          rating,
+          reviewCount,
         }));
         setOperatorLockKey((k) => k + 1);
       }
 
-      setStatus(`Updated prices for “${note.name}”.`);
+      setStatus(
+        anyPrice
+          ? `Updated prices for “${note.name}”.`
+          : `Updated hotel rating for “${note.name}” — no matching tour prices.`,
+      );
     } catch (err) {
       setStatus(err instanceof Error ? err.message : String(err));
     } finally {
@@ -638,6 +673,13 @@ export default function App() {
                 onChange={(e) => setField("name", e.target.value)}
               />
             </label>
+
+            {(() => {
+              const quality = formatHotelQuality(form);
+              return quality ? (
+                <p className="sm:col-span-2 text-sm text-slate-600">{quality}</p>
+              ) : null;
+            })()}
 
             <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
               Hotel page URL
@@ -964,6 +1006,14 @@ export default function App() {
                           {n.name}
                         </span>
                       </div>
+                      {(() => {
+                        const quality = formatHotelQuality(n);
+                        return quality ? (
+                          <p className="mt-0.5 text-sm text-slate-500">
+                            {quality}
+                          </p>
+                        ) : null;
+                      })()}
                       <div className="mt-1 text-sm text-slate-600">
                         {[
                           formatPriceSlot(

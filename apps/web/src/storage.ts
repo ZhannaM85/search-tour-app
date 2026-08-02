@@ -62,11 +62,24 @@ function normalizeNote(value: unknown): HotelNote | null {
     priceHistoryOneRoom: normalizeHistory(n.priceHistoryOneRoom),
     priceHistoryTwoRooms: normalizeHistory(n.priceHistoryTwoRooms),
     priceHistoryThreeRooms: normalizeHistory(n.priceHistoryThreeRooms),
+    stars: normalizeOptionalNumber(n.stars),
+    rating: normalizeOptionalNumber(n.rating),
+    reviewCount: normalizeOptionalNumber(n.reviewCount, true),
     notes: typeof n.notes === "string" ? n.notes : "",
     favorite: Boolean(n.favorite),
     createdAt: typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),
     updatedAt: typeof n.updatedAt === "string" ? n.updatedAt : new Date().toISOString(),
   };
+}
+
+function normalizeOptionalNumber(
+  value: unknown,
+  allowZero = false,
+): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  if (!allowZero && value <= 0) return null;
+  if (allowZero && value < 0) return null;
+  return value;
 }
 
 export function saveNotes(notes: HotelNote[]): void {

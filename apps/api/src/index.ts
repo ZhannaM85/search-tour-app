@@ -3,9 +3,10 @@ import cors from "cors";
 import { z } from "zod";
 import {
   extractFromTourRows,
-  extractRoomCatalogFromHtml,
+  extractHotelPageDataFromHtml,
   normalizeCurlText,
   parseCurlRequest,
+  type HotelPageExtract,
 } from "./curl.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -17,11 +18,20 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-async function fetchRoomCatalog(
+function emptyHotelPage(): HotelPageExtract {
+  return {
+    rooms: new Map(),
+    stars: null,
+    rating: null,
+    reviewCount: null,
+  };
+}
+
+async function fetchHotelPageData(
   pageUrl: string,
   refererUrl: string,
   tourHeaders: Record<string, string>,
-) {
+): Promise<HotelPageExtract> {
   const candidates = [refererUrl, pageUrl].filter(
     (u) => typeof u === "string" && /^https?:\/\//i.test(u),
   );
@@ -36,6 +46,7 @@ async function fetchRoomCatalog(
   const lang = tourHeaders["Accept-Language"] ?? tourHeaders["accept-language"];
   if (lang) htmlHeaders["Accept-Language"] = lang;
 
+  let best = emptyHotelPage();
   for (const candidate of candidates) {
     if (seen.has(candidate)) continue;
     seen.add(candidate);
@@ -47,13 +58,21 @@ async function fetchRoomCatalog(
       });
       if (!res.ok) continue;
       const html = await res.text();
-      const catalog = extractRoomCatalogFromHtml(html);
-      if (catalog.size > 0) return catalog;
+      const data = extractHotelPageDataFromHtml(html);
+      if (data.rooms.size > 0) return data;
+      if (
+        best.stars == null &&
+        best.rating == null &&
+        best.reviewCount == null &&
+        (data.stars != null || data.rating != null || data.reviewCount != null)
+      ) {
+        best = data;
+      }
     } catch {
       /* try next candidate */
     }
   }
-  return new Map();
+  return best;
 }
 
 app.post("/api/parse-tour-curl", async (req, res) => {
@@ -96,19 +115,22 @@ app.post("/api/parse-tour-curl", async (req, res) => {
       if (lastErr) throw lastErr;
     }
 
-    const roomCatalog = await fetchRoomCatalog(
+    const page = await fetchHotelPageData(
       extracted!.pageUrl,
       refererUrl,
       headers,
     );
-    if (roomCatalog.size > 0) {
-      extracted = extractFromTourRows(json, refererUrl, roomCatalog);
+    if (page.rooms.size > 0) {
+      extracted = extractFromTourRows(json, refererUrl, page.rooms);
     }
 
     res.json({
       requestUrl: url,
       refererUrl,
       ...extracted!,
+      stars: page.stars,
+      rating: page.rating,
+      reviewCount: page.reviewCount,
     });
   } catch (err) {
     res.status(400).json({
@@ -176,13 +198,13 @@ app.post("/api/refresh-hotel-prices", async (req, res) => {
       if (lastErr) throw lastErr;
     }
 
-    const roomCatalog = await fetchRoomCatalog(
+    const page = await fetchHotelPageData(
       extracted!.pageUrl,
       body.refererUrl,
       headers,
     );
-    if (roomCatalog.size > 0) {
-      extracted = extractFromTourRows(json, body.refererUrl, roomCatalog);
+    if (page.rooms.size > 0) {
+      extracted = extractFromTourRows(json, body.refererUrl, page.rooms);
     }
 
     res.json({
@@ -192,6 +214,9 @@ app.post("/api/refresh-hotel-prices", async (req, res) => {
       operatorOneRoom: extracted!.operatorOneRoom,
       operatorTwoRooms: extracted!.operatorTwoRooms,
       operatorThreeRooms: extracted!.operatorThreeRooms,
+      stars: page.stars,
+      rating: page.rating,
+      reviewCount: page.reviewCount,
     });
   } catch (err) {
     res.status(400).json({

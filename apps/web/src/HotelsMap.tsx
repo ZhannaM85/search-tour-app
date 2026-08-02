@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useMemo, useRef } from "react";
 import type { HotelNote } from "./types";
+import { formatHotelQuality } from "./types";
 import { formatPrice } from "./formatPrice";
 import StarIcon from "./StarIcon";
 
@@ -93,6 +94,12 @@ function HotelMarker({
             ) : null}
             <span>{note.name}</span>
           </div>
+          {(() => {
+            const quality = formatHotelQuality(note);
+            return quality ? (
+              <div className="text-slate-600">{quality}</div>
+            ) : null;
+          })()}
           {note.priceTwoRooms ? (
             <div>
               2 rooms: {formatPrice(note.priceTwoRooms)}

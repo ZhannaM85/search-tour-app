@@ -30,6 +30,41 @@ export type RoomCatalogEntry = {
   roomCount: number;
 };
 
+/** Star category, guest rating, and review count from hotel page SSR. */
+export type HotelQualitySignals = {
+  /** Star category as a number (e.g. 5 from `"5*"`). */
+  stars: number | null;
+  /** Guest rating (e.g. 9.58). */
+  rating: number | null;
+  /** Number of reviews / votes (e.g. 388). */
+  reviewCount: number | null;
+};
+
+export type HotelPageExtract = HotelQualitySignals & {
+  rooms: Map<number, RoomCatalogEntry>;
+};
+
+function emptyHotelPageExtract(): HotelPageExtract {
+  return {
+    rooms: new Map(),
+    stars: null,
+    rating: null,
+    reviewCount: null,
+  };
+}
+
+/** Parse `"5*"` / `"5★"` / `5` into a star count. */
+function parseStarCategory(raw: unknown): number | null {
+  if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+    return Math.round(raw);
+  }
+  if (typeof raw !== "string") return null;
+  const m = raw.trim().match(/^(\d+)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 /** Turn `//host/path` or absolute http(s) into a usable https URL. */
 export function absoluteHttpUrl(raw: string): string {
   const s = raw.trim();
@@ -131,33 +166,62 @@ function hotelPhotoUrl(hotelId: number | null, rowPhoto: string): string {
 }
 
 /**
- * Hotel room catalog is SSR'd into the hotel page as
- * `window.__INITIAL_STATE__.pageModel.hotelDetails.rooms` — not a Network XHR.
- * Each room has `id` (joins GetTours aaData[44]) and `roomCount` (1, 2, …).
+ * Hotel details (rooms + quality signals) are SSR'd into the hotel page as
+ * `window.__INITIAL_STATE__.pageModel.hotelDetails` — not a Network XHR.
+ *
+ * Rooms: `id` joins GetTours aaData[44], `roomCount` is 1/2/3.
+ * Quality: `category.name` (e.g. `"5*"`), `rate`, `reviewCount`.
+ * GetTours aaData does not carry these quality fields in a mapped IDX column.
  */
-export function extractRoomCatalogFromHtml(
-  html: string,
-): Map<number, RoomCatalogEntry> {
-  const map = new Map<number, RoomCatalogEntry>();
+export function extractHotelPageDataFromHtml(html: string): HotelPageExtract {
+  const out = emptyHotelPageExtract();
   const match = html.match(
     /window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/,
   );
-  if (!match) return map;
+  if (!match) return out;
 
   let state: unknown;
   try {
     state = JSON.parse(match[1]);
   } catch {
-    return map;
+    return out;
   }
 
-  const rooms = (
+  const hotelDetails = (
     state as {
-      pageModel?: { hotelDetails?: { rooms?: unknown } };
+      pageModel?: {
+        hotelDetails?: {
+          rooms?: unknown;
+          category?: { name?: unknown } | null;
+          rate?: unknown;
+          reviewCount?: unknown;
+        };
+      };
     }
-  )?.pageModel?.hotelDetails?.rooms;
+  )?.pageModel?.hotelDetails;
 
-  if (!Array.isArray(rooms)) return map;
+  if (!hotelDetails) return out;
+
+  const categoryName = hotelDetails.category?.name;
+  out.stars = parseStarCategory(categoryName);
+
+  const rate =
+    typeof hotelDetails.rate === "number"
+      ? hotelDetails.rate
+      : Number(hotelDetails.rate);
+  out.rating = Number.isFinite(rate) && rate > 0 ? rate : null;
+
+  const reviewCount =
+    typeof hotelDetails.reviewCount === "number"
+      ? hotelDetails.reviewCount
+      : Number(hotelDetails.reviewCount);
+  out.reviewCount =
+    Number.isFinite(reviewCount) && reviewCount >= 0
+      ? Math.round(reviewCount)
+      : null;
+
+  const rooms = hotelDetails.rooms;
+  if (!Array.isArray(rooms)) return out;
 
   for (const room of rooms) {
     if (!room || typeof room !== "object") continue;
@@ -168,13 +232,19 @@ export function extractRoomCatalogFromHtml(
     if (!Number.isFinite(id) || !Number.isFinite(roomCount) || roomCount < 1) {
       continue;
     }
-    map.set(id, {
+    out.rooms.set(id, {
       id,
       name: r.name == null ? "" : String(r.name),
       roomCount,
     });
   }
-  return map;
+  return out;
+}
+
+export function extractRoomCatalogFromHtml(
+  html: string,
+): Map<number, RoomCatalogEntry> {
+  return extractHotelPageDataFromHtml(html).rooms;
 }
 
 type PriceWithOperator = {

@@ -29,11 +29,38 @@ export type HotelNote = {
   priceHistoryOneRoom: PriceHistoryEntry[];
   priceHistoryTwoRooms: PriceHistoryEntry[];
   priceHistoryThreeRooms: PriceHistoryEntry[];
+  /** Star category from hotel page (e.g. 5). */
+  stars: number | null;
+  /** Guest rating from hotel page (e.g. 9.58). */
+  rating: number | null;
+  /** Review / vote count from hotel page (e.g. 388). */
+  reviewCount: number | null;
   notes: string;
   favorite: boolean;
   createdAt: string;
   updatedAt: string;
 };
+
+/** Compact quality line: `5★ · 9.58 (388)`. */
+export function formatHotelQuality(note: {
+  stars: number | null;
+  rating: number | null;
+  reviewCount: number | null;
+}): string | null {
+  const bits: string[] = [];
+  if (note.stars != null) bits.push(`${note.stars}★`);
+  if (note.rating != null) {
+    const ratingText = String(Math.round(note.rating * 100) / 100);
+    bits.push(
+      note.reviewCount != null
+        ? `${ratingText} (${note.reviewCount})`
+        : ratingText,
+    );
+  } else if (note.reviewCount != null) {
+    bits.push(`(${note.reviewCount})`);
+  }
+  return bits.length ? bits.join(" · ") : null;
+}
 
 export type ParsedTourCurl = {
   requestUrl: string;

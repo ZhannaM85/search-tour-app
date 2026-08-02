@@ -19,6 +19,12 @@ export type ParsedHotel = {
   operatorTwoRooms: string | null;
   /** Operator name for the winning 3-room offer (aaData[18]). */
   operatorThreeRooms: string | null;
+  /** Star category from hotel page SSR (e.g. 5). */
+  stars: number | null;
+  /** Guest rating from hotel page SSR (e.g. 9.58). */
+  rating: number | null;
+  /** Review count from hotel page SSR (e.g. 388). */
+  reviewCount: number | null;
   requestUrl?: string;
   refererUrl?: string;
 };
@@ -30,6 +36,9 @@ export type RefreshedPrices = {
   operatorOneRoom: string | null;
   operatorTwoRooms: string | null;
   operatorThreeRooms: string | null;
+  stars: number | null;
+  rating: number | null;
+  reviewCount: number | null;
 };
 
 export async function parseTourCurl(curl: string): Promise<ParsedHotel> {

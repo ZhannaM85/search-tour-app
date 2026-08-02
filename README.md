@@ -36,8 +36,31 @@ npm run dev:viewer
 
 If [`shortlist.json`](apps/web/public/shortlist.json) is empty, the viewer previews hotels from the full app’s `localStorage` on that same port.
 
-**For a publishable snapshot** (later for GitHub Pages):
+**For a publishable snapshot** (needed for GitHub Pages):
 
 1. In the full app, click **Export**
 2. `npm run prepare:public-shortlist -- path/to/hotel-shortlist-YYYY-MM-DD.json`
 3. Refresh the viewer (or commit the JSON for Pages)
+
+## GitHub Pages (public snapshot)
+
+The public site is a **static** build of the read-only viewer (`npm run build:pages`). There is no API and no way to add hotels online.
+
+**One-time setup**
+
+1. Make the repo **public** (or use GitHub Pages on a private repo with a paid plan).
+2. Repo **Settings → Pages → Source: GitHub Actions**.
+
+**Publish / refresh the list**
+
+1. Export from the full app, then:
+   ```bash
+   npm run prepare:public-shortlist -- path/to/export.json
+   ```
+   Writes sanitized [`apps/web/public/shortlist.json`](apps/web/public/shortlist.json) (strips tour request/referer URLs; clears favorite/dislike so each visitor starts clean).
+2. Commit and push to `master`.
+3. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds and deploys.
+
+Site: [https://zhannam85.github.io/search-tour-app/](https://zhannam85.github.io/search-tour-app/)
+
+**Privacy:** hotels, prices, and notes in `shortlist.json` become public. Scrub personal notes before preparing the snapshot if needed.

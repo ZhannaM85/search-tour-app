@@ -48,10 +48,12 @@ function HotelMarker({
   note,
   focused,
   focusNonce,
+  onToggleFavorite,
 }: {
   note: HotelNote;
   focused: boolean;
   focusNonce: number;
+  onToggleFavorite?: (id: string) => void;
 }) {
   const markerRef = useRef<L.Marker | null>(null);
   const map = useMap();
@@ -89,7 +91,32 @@ function HotelMarker({
             />
           ) : null}
           <div className="flex items-center gap-1 font-semibold">
-            {note.favorite ? (
+            {onToggleFavorite ? (
+              <button
+                type="button"
+                className={`shrink-0 rounded p-0.5 ${
+                  note.favorite
+                    ? "text-amber-400 hover:text-amber-500"
+                    : "text-slate-300 hover:text-amber-400"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavorite(note.id);
+                }}
+                aria-label={
+                  note.favorite
+                    ? `Remove ${note.name} from favorites`
+                    : `Add ${note.name} to favorites`
+                }
+                aria-pressed={note.favorite}
+                title={
+                  note.favorite ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <StarIcon filled={note.favorite} className="h-4 w-4" />
+              </button>
+            ) : note.favorite ? (
               <StarIcon filled className="h-4 w-4 text-amber-400" />
             ) : null}
             <span>{note.name}</span>
@@ -136,10 +163,12 @@ export default function HotelsMap({
   notes,
   focusId,
   focusNonce = 0,
+  onToggleFavorite,
 }: {
   notes: HotelNote[];
   focusId?: string | null;
   focusNonce?: number;
+  onToggleFavorite?: (id: string) => void;
 }) {
   const center: [number, number] =
     notes.length > 0
@@ -165,6 +194,7 @@ export default function HotelsMap({
           note={n}
           focused={n.id === focusId}
           focusNonce={focusNonce}
+          onToggleFavorite={onToggleFavorite}
         />
       ))}
     </MapContainer>

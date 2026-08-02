@@ -1333,6 +1333,7 @@ export default function App() {
           notes={mapNotes}
           focusId={focusId}
           focusNonce={focusNonce}
+          onToggleFavorite={handleToggleFavorite}
         />
       </section>
 

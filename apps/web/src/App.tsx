@@ -233,6 +233,8 @@ export default function App() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("recent-desc");
   const [nameQuery, setNameQuery] = useState("");
+  /** Hotel star category: 4 → 4★, 5 → 5★. */
+  const [starsFilter, setStarsFilter] = useState<"all" | "4" | "5">("all");
   /** Floor band of guest rating: 8 → 8.0–8.99, 9 → 9.0–9.99. */
   const [ratingBand, setRatingBand] = useState<"all" | "8" | "9">("all");
   /** Which room price the max-price filter uses. */
@@ -333,6 +335,10 @@ export default function App() {
     if (q) {
       list = list.filter((n) => n.name.toLowerCase().includes(q));
     }
+    if (starsFilter !== "all") {
+      const stars = Number(starsFilter);
+      list = list.filter((n) => n.stars != null && n.stars === stars);
+    }
     if (ratingBand !== "all") {
       const band = Number(ratingBand);
       list = list.filter(
@@ -365,6 +371,7 @@ export default function App() {
     favoritesOnly,
     sortMode,
     nameQuery,
+    starsFilter,
     ratingBand,
     priceFilterRoom,
     priceMax,
@@ -375,6 +382,7 @@ export default function App() {
   const listFiltered =
     favoritesOnly ||
     nameQuery.trim().length > 0 ||
+    starsFilter !== "all" ||
     ratingBand !== "all" ||
     parsePriceDigits(priceMax).length > 0;
 
@@ -1545,7 +1553,21 @@ export default function App() {
               </label>
               <div className="flex flex-wrap gap-2">
                 <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
-                  <span className="sr-only">Filter by rating</span>
+                  <span className="sr-only">Filter by star category</span>
+                  <select
+                    value={starsFilter}
+                    onChange={(e) =>
+                      setStarsFilter(e.target.value as "all" | "4" | "5")
+                    }
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+                  >
+                    <option value="all">Stars: any</option>
+                    <option value="5">Stars: 5★</option>
+                    <option value="4">Stars: 4★</option>
+                  </select>
+                </label>
+                <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                  <span className="sr-only">Filter by guest rating</span>
                   <select
                     value={ratingBand}
                     onChange={(e) =>

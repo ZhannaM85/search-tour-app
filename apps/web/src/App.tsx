@@ -27,6 +27,7 @@ type FormState = {
   longitude: string;
   priceOneRoom: string;
   priceTwoRooms: string;
+  priceThreeRooms: string;
   notes: string;
   favorite: boolean;
 };
@@ -42,6 +43,7 @@ const emptyForm = (): FormState => ({
   longitude: "",
   priceOneRoom: "",
   priceTwoRooms: "",
+  priceThreeRooms: "",
   notes: "",
   favorite: false,
 });
@@ -80,6 +82,29 @@ export default function App() {
     [notes],
   );
 
+  /** When adding (not editing), disable Save if this hotel is already shortlisted. */
+  const duplicateOfForm = useMemo(() => {
+    if (form.id != null) return undefined;
+    const lat = Number(form.latitude);
+    const lng = Number(form.longitude);
+    const hotelId = form.hotelId ? Number(form.hotelId) : null;
+    return findDuplicateHotel(notes, {
+      hotelId: hotelId != null && Number.isFinite(hotelId) ? hotelId : null,
+      pageUrl: form.pageUrl,
+      name: form.name,
+      latitude: Number.isFinite(lat) ? lat : undefined,
+      longitude: Number.isFinite(lng) ? lng : undefined,
+    });
+  }, [
+    form.id,
+    form.hotelId,
+    form.pageUrl,
+    form.name,
+    form.latitude,
+    form.longitude,
+    notes,
+  ]);
+
   function selectHotel(id: string) {
     setFocusId(id);
     setFocusNonce((n) => n + 1);
@@ -116,6 +141,18 @@ export default function App() {
         hotelId: parsed.hotelId != null ? String(parsed.hotelId) : "",
         latitude: String(parsed.latitude),
         longitude: String(parsed.longitude),
+        priceOneRoom:
+          parsed.priceOneRoom != null
+            ? String(parsed.priceOneRoom)
+            : f.priceOneRoom,
+        priceTwoRooms:
+          parsed.priceTwoRooms != null
+            ? String(parsed.priceTwoRooms)
+            : f.priceTwoRooms,
+        priceThreeRooms:
+          parsed.priceThreeRooms != null
+            ? String(parsed.priceThreeRooms)
+            : f.priceThreeRooms,
       }));
       const duplicate = findDuplicateHotel(notes, {
         hotelId: parsed.hotelId,
@@ -130,10 +167,28 @@ export default function App() {
           `“${duplicate.name}” is already on your shortlist. Open it from the list to edit.`,
         );
       } else {
+        const priceBits: string[] = [];
+        if (parsed.priceOneRoom != null) {
+          priceBits.push(`1 room ${formatPrice(String(parsed.priceOneRoom))}`);
+        }
+        if (parsed.priceTwoRooms != null) {
+          priceBits.push(
+            `2 rooms ${formatPrice(String(parsed.priceTwoRooms))}`,
+          );
+        }
+        if (parsed.priceThreeRooms != null) {
+          priceBits.push(
+            `3 rooms ${formatPrice(String(parsed.priceThreeRooms))}`,
+          );
+        }
+        const priceMsg =
+          priceBits.length > 0
+            ? ` Prices: ${priceBits.join(", ")}.`
+            : " No matching tour prices found — enter them manually.";
         setStatus(
           parsed.photoUrl
-            ? `Loaded “${parsed.name}” with map coordinates and photo.`
-            : `Loaded “${parsed.name}” with map coordinates.`,
+            ? `Loaded “${parsed.name}” with map coordinates and photo.${priceMsg}`
+            : `Loaded “${parsed.name}” with map coordinates.${priceMsg}`,
         );
       }
     } catch (err) {
@@ -192,6 +247,7 @@ export default function App() {
       longitude: lng,
       priceOneRoom: form.priceOneRoom.trim(),
       priceTwoRooms: form.priceTwoRooms.trim(),
+      priceThreeRooms: form.priceThreeRooms.trim(),
       notes: form.notes.trim(),
       favorite: form.favorite,
       createdAt: existing?.createdAt ?? now,
@@ -219,6 +275,7 @@ export default function App() {
       longitude: String(note.longitude),
       priceOneRoom: note.priceOneRoom,
       priceTwoRooms: note.priceTwoRooms,
+      priceThreeRooms: note.priceThreeRooms,
       notes: note.notes,
       favorite: note.favorite,
     });
@@ -324,7 +381,7 @@ export default function App() {
             onClick={handleParseCurl}
             className="mt-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
           >
-            {busy ? "Loading…" : "Load name & coordinates"}
+            {busy ? "Loading…" : "Load name, coordinates & prices"}
           </button>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -412,6 +469,27 @@ export default function App() {
               </div>
             </label>
 
+            <label className="block text-sm font-medium text-slate-700">
+              Price — 3 rooms
+              <div className="relative mt-1">
+                <input
+                  inputMode="numeric"
+                  className="w-full rounded-xl border border-slate-300 py-2 pl-3 pr-8"
+                  value={formatPriceInput(form.priceThreeRooms)}
+                  onChange={(e) =>
+                    setField(
+                      "priceThreeRooms",
+                      parsePriceDigits(e.target.value),
+                    )
+                  }
+                  placeholder="500 000"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-slate-400">
+                  ₽
+                </span>
+              </div>
+            </label>
+
             <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
               Your notes
               <textarea
@@ -442,7 +520,13 @@ export default function App() {
             <button
               type="button"
               onClick={handleSave}
-              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+              disabled={Boolean(duplicateOfForm)}
+              title={
+                duplicateOfForm
+                  ? `“${duplicateOfForm.name}” is already on your shortlist`
+                  : undefined
+              }
+              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:bg-slate-300"
             >
               {form.id ? "Update" : "Save to shortlist"}
             </button>
@@ -482,6 +566,8 @@ export default function App() {
                   <option value="one-desc">1 room: high → low</option>
                   <option value="two-asc">2 rooms: low → high</option>
                   <option value="two-desc">2 rooms: high → low</option>
+                  <option value="three-asc">3 rooms: low → high</option>
+                  <option value="three-desc">3 rooms: high → low</option>
                 </select>
               </label>
               <button

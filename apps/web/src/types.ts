@@ -41,12 +41,15 @@ export type HotelNote = {
   updatedAt: string;
 };
 
-/** Compact quality line: `5★ · 9.58 (388)`. */
-export function formatHotelQuality(note: {
-  stars: number | null;
-  rating: number | null;
-  reviewCount: number | null;
-}): string | null {
+/** Compact quality line: `5★ · 9.58 (388)` or with weighted `· w9.12`. */
+export function formatHotelQuality(
+  note: {
+    stars: number | null;
+    rating: number | null;
+    reviewCount: number | null;
+  },
+  weighted?: number | null,
+): string | null {
   const bits: string[] = [];
   if (note.stars != null) bits.push(`${note.stars}★`);
   if (note.rating != null) {
@@ -58,6 +61,9 @@ export function formatHotelQuality(note: {
     );
   } else if (note.reviewCount != null) {
     bits.push(`(${note.reviewCount})`);
+  }
+  if (weighted != null && Number.isFinite(weighted)) {
+    bits.push(`w${(Math.round(weighted * 100) / 100).toFixed(2)}`);
   }
   return bits.length ? bits.join(" · ") : null;
 }

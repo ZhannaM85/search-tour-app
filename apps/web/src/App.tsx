@@ -31,6 +31,10 @@ import {
 } from "./storage";
 import type { HotelNote, PriceHistoryEntry } from "./types";
 import { formatHotelQuality, historyAfterPriceChange } from "./types";
+import {
+  ratingPriorFromHotels,
+  weightedRating,
+} from "./weightedRating";
 
 type FormState = {
   id: string | null;
@@ -225,6 +229,8 @@ export default function App() {
   const [editBaseline, setEditBaseline] = useState<EditBaseline | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  const ratingPrior = useMemo(() => ratingPriorFromHotels(notes), [notes]);
+
   const sorted = useMemo(() => {
     const q = nameQuery.trim().toLowerCase();
     const maxDigits = parsePriceDigits(priceMax);
@@ -253,7 +259,7 @@ export default function App() {
         return Number.isFinite(price) && price <= maxPrice;
       });
     }
-    return sortHotels(list, sortMode);
+    return sortHotels(list, sortMode, ratingPrior);
   }, [
     notes,
     favoritesOnly,
@@ -262,6 +268,7 @@ export default function App() {
     ratingBand,
     priceFilterRoom,
     priceMax,
+    ratingPrior,
   ]);
 
   const listFiltered =
@@ -921,7 +928,10 @@ export default function App() {
             </label>
 
             {(() => {
-              const quality = formatHotelQuality(form);
+              const quality = formatHotelQuality(
+                form,
+                weightedRating(form.rating, form.reviewCount, ratingPrior),
+              );
               return quality ? (
                 <p className="sm:col-span-2 text-sm text-slate-600">{quality}</p>
               ) : null;
@@ -1179,15 +1189,35 @@ export default function App() {
                       ? sortDir === "desc"
                         ? "Rating: high → low — click for low → high"
                         : "Rating: low → high — click for high → low"
-                      : "Sort by rating"
+                      : "Sort by guest rating"
                   }
-                  aria-label="Sort by rating"
+                  aria-label="Sort by guest rating"
                   onClick={() => selectSortField("rating")}
                 >
                   <StarIcon
                     filled={sortField === "rating"}
                     className="h-4 w-4"
                   />
+                </button>
+                <button
+                  type="button"
+                  className={sortChipClass(sortField === "weighted")}
+                  aria-pressed={sortField === "weighted"}
+                  title={
+                    sortField === "weighted"
+                      ? sortDir === "desc"
+                        ? "Weighted rating: high → low — click for low → high"
+                        : "Weighted rating: low → high — click for high → low"
+                      : "Sort by vote-weighted rating"
+                  }
+                  aria-label="Sort by vote-weighted rating"
+                  onClick={() => selectSortField("weighted")}
+                >
+                  <StarIcon
+                    filled={sortField === "weighted"}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-[10px] font-bold leading-none">w</span>
                 </button>
               </div>
               <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
@@ -1383,7 +1413,10 @@ export default function App() {
                         </span>
                       </div>
                       {(() => {
-                        const quality = formatHotelQuality(n);
+                        const quality = formatHotelQuality(
+                          n,
+                          weightedRating(n.rating, n.reviewCount, ratingPrior),
+                        );
                         return quality ? (
                           <p className="mt-0.5 text-sm text-slate-500">
                             {quality}

@@ -1,10 +1,15 @@
 import type { HotelNote } from "./types";
 import { parsePriceDigits } from "./formatPrice";
+import {
+  weightedRating,
+  type RatingPrior,
+} from "./weightedRating";
 
 export type SortField =
   | "recent"
   | "name"
   | "rating"
+  | "weighted"
   | "one"
   | "two"
   | "three";
@@ -18,6 +23,8 @@ export type SortMode =
   | "name-desc"
   | "rating-desc"
   | "rating-asc"
+  | "weighted-desc"
+  | "weighted-asc"
   | "one-asc"
   | "one-desc"
   | "two-asc"
@@ -35,6 +42,7 @@ export function defaultSortDir(field: SortField): SortDir {
       return "asc";
     case "recent":
     case "rating":
+    case "weighted":
     default:
       return "desc";
   }
@@ -74,15 +82,30 @@ function compareFavoritesFirst(a: HotelNote, b: HotelNote): number {
   return 0;
 }
 
-/** Missing ratings always sort last. Ties: more reviews, then name. */
-function compareRating(a: HotelNote, b: HotelNote, ascending: boolean): number {
-  const aRating = a.rating;
-  const bRating = b.rating;
-  if (aRating == null && bRating == null) return 0;
-  if (aRating == null) return 1;
-  if (bRating == null) return -1;
-  if (aRating !== bRating) {
-    return ascending ? aRating - bRating : bRating - aRating;
+/**
+ * Compare by raw rating, or by Bayesian-weighted rating when `useWeighted`.
+ * Missing scores always last. Ties: more reviews, then name.
+ */
+function compareRating(
+  a: HotelNote,
+  b: HotelNote,
+  ascending: boolean,
+  prior: RatingPrior | undefined,
+  useWeighted: boolean,
+): number {
+  const aScore =
+    useWeighted && prior
+      ? weightedRating(a.rating, a.reviewCount, prior)
+      : a.rating;
+  const bScore =
+    useWeighted && prior
+      ? weightedRating(b.rating, b.reviewCount, prior)
+      : b.rating;
+  if (aScore == null && bScore == null) return 0;
+  if (aScore == null) return 1;
+  if (bScore == null) return -1;
+  if (aScore !== bScore) {
+    return ascending ? aScore - bScore : bScore - aScore;
   }
   const aVotes = a.reviewCount ?? -1;
   const bVotes = b.reviewCount ?? -1;
@@ -90,7 +113,11 @@ function compareRating(a: HotelNote, b: HotelNote, ascending: boolean): number {
   return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 }
 
-export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
+export function sortHotels(
+  notes: HotelNote[],
+  mode: SortMode,
+  prior?: RatingPrior,
+): HotelNote[] {
   const list = [...notes];
   switch (mode) {
     case "name-asc":
@@ -109,13 +136,25 @@ export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
       return list.sort((a, b) => {
         const fav = compareFavoritesFirst(a, b);
         if (fav !== 0) return fav;
-        return compareRating(a, b, true);
+        return compareRating(a, b, true, prior, false);
       });
     case "rating-desc":
       return list.sort((a, b) => {
         const fav = compareFavoritesFirst(a, b);
         if (fav !== 0) return fav;
-        return compareRating(a, b, false);
+        return compareRating(a, b, false, prior, false);
+      });
+    case "weighted-asc":
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        return compareRating(a, b, true, prior, true);
+      });
+    case "weighted-desc":
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        return compareRating(a, b, false, prior, true);
       });
     case "one-asc":
       return list.sort((a, b) =>

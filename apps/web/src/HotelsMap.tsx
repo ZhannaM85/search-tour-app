@@ -5,6 +5,10 @@ import type { HotelNote } from "./types";
 import { formatHotelQuality } from "./types";
 import { formatPrice } from "./formatPrice";
 import StarIcon from "./StarIcon";
+import {
+  ratingPriorFromHotels,
+  weightedRating,
+} from "./weightedRating";
 
 const markerIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -49,11 +53,13 @@ function HotelMarker({
   focused,
   focusNonce,
   onToggleFavorite,
+  weighted,
 }: {
   note: HotelNote;
   focused: boolean;
   focusNonce: number;
   onToggleFavorite?: (id: string) => void;
+  weighted?: number | null;
 }) {
   const markerRef = useRef<L.Marker | null>(null);
   const map = useMap();
@@ -122,7 +128,7 @@ function HotelMarker({
             <span>{note.name}</span>
           </div>
           {(() => {
-            const quality = formatHotelQuality(note);
+            const quality = formatHotelQuality(note, weighted);
             return quality ? (
               <div className="text-slate-600">{quality}</div>
             ) : null;
@@ -174,6 +180,7 @@ export default function HotelsMap({
     notes.length > 0
       ? [notes[0].latitude, notes[0].longitude]
       : [36.8, 31.4];
+  const ratingPrior = ratingPriorFromHotels(notes);
 
   return (
     <MapContainer
@@ -195,6 +202,7 @@ export default function HotelsMap({
           focused={n.id === focusId}
           focusNonce={focusNonce}
           onToggleFavorite={onToggleFavorite}
+          weighted={weightedRating(n.rating, n.reviewCount, ratingPrior)}
         />
       ))}
     </MapContainer>

@@ -3,6 +3,7 @@ import cors from "cors";
 import { z } from "zod";
 import {
   extractFromTourRows,
+  extractRoomCatalogFromHtml,
   normalizeCurlText,
   parseCurlRequest,
 } from "./curl.js";
@@ -15,6 +16,45 @@ app.use(express.json({ limit: "4mb" }));
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
+
+async function fetchRoomCatalog(
+  pageUrl: string,
+  refererUrl: string,
+  tourHeaders: Record<string, string>,
+) {
+  const candidates = [refererUrl, pageUrl].filter(
+    (u) => typeof u === "string" && /^https?:\/\//i.test(u),
+  );
+  const seen = new Set<string>();
+  const htmlHeaders: Record<string, string> = {
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "User-Agent":
+      tourHeaders["User-Agent"] ??
+      tourHeaders["user-agent"] ??
+      "Mozilla/5.0 (compatible; search-tour-app)",
+  };
+  const lang = tourHeaders["Accept-Language"] ?? tourHeaders["accept-language"];
+  if (lang) htmlHeaders["Accept-Language"] = lang;
+
+  for (const candidate of candidates) {
+    if (seen.has(candidate)) continue;
+    seen.add(candidate);
+    try {
+      const res = await fetch(candidate, {
+        method: "GET",
+        headers: htmlHeaders,
+        redirect: "follow",
+      });
+      if (!res.ok) continue;
+      const html = await res.text();
+      const catalog = extractRoomCatalogFromHtml(html);
+      if (catalog.size > 0) return catalog;
+    } catch {
+      /* try next candidate */
+    }
+  }
+  return new Map();
+}
 
 app.post("/api/parse-tour-curl", async (req, res) => {
   try {
@@ -55,6 +95,16 @@ app.post("/api/parse-tour-curl", async (req, res) => {
       }
       if (lastErr) throw lastErr;
     }
+
+    const roomCatalog = await fetchRoomCatalog(
+      extracted!.pageUrl,
+      refererUrl,
+      headers,
+    );
+    if (roomCatalog.size > 0) {
+      extracted = extractFromTourRows(json, refererUrl, roomCatalog);
+    }
+
     res.json({
       requestUrl: url,
       refererUrl,

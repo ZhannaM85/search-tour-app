@@ -4,9 +4,19 @@ const IDX = {
   HOTEL_NAME: 7,
   /** Protocol-relative hotel thumbnail, e.g. `//host/i/p/{id}_30.jpg` */
   PHOTO: 29,
+  /** Full tour price in request currency (number). */
+  PRICE: 42,
+  /** System room-type id — joins to hotel page `rooms[].id`. */
+  ROOM_TYPE_ID: 44,
   LAT: 92,
   LNG: 93,
 } as const;
+
+export type RoomCatalogEntry = {
+  id: number;
+  name: string;
+  roomCount: number;
+};
 
 /** Turn `//host/path` or absolute http(s) into a usable https URL. */
 export function absoluteHttpUrl(raw: string): string {
@@ -108,9 +118,95 @@ function hotelPhotoUrl(hotelId: number | null, rowPhoto: string): string {
   return absolute;
 }
 
+/**
+ * Hotel room catalog is SSR'd into the hotel page as
+ * `window.__INITIAL_STATE__.pageModel.hotelDetails.rooms` — not a Network XHR.
+ * Each room has `id` (joins GetTours aaData[44]) and `roomCount` (1, 2, …).
+ */
+export function extractRoomCatalogFromHtml(
+  html: string,
+): Map<number, RoomCatalogEntry> {
+  const map = new Map<number, RoomCatalogEntry>();
+  const match = html.match(
+    /window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/,
+  );
+  if (!match) return map;
+
+  let state: unknown;
+  try {
+    state = JSON.parse(match[1]);
+  } catch {
+    return map;
+  }
+
+  const rooms = (
+    state as {
+      pageModel?: { hotelDetails?: { rooms?: unknown } };
+    }
+  )?.pageModel?.hotelDetails?.rooms;
+
+  if (!Array.isArray(rooms)) return map;
+
+  for (const room of rooms) {
+    if (!room || typeof room !== "object") continue;
+    const r = room as Record<string, unknown>;
+    const id = typeof r.id === "number" ? r.id : Number(r.id);
+    const roomCount =
+      typeof r.roomCount === "number" ? r.roomCount : Number(r.roomCount);
+    if (!Number.isFinite(id) || !Number.isFinite(roomCount) || roomCount < 1) {
+      continue;
+    }
+    map.set(id, {
+      id,
+      name: r.name == null ? "" : String(r.name),
+      roomCount,
+    });
+  }
+  return map;
+}
+
+function cheapestPricesByRoomCount(
+  aaData: unknown[],
+  hotelId: number | null,
+  catalog: Map<number, RoomCatalogEntry>,
+): {
+  priceOneRoom: number | null;
+  priceTwoRooms: number | null;
+  priceThreeRooms: number | null;
+} {
+  let priceOneRoom: number | null = null;
+  let priceTwoRooms: number | null = null;
+  let priceThreeRooms: number | null = null;
+
+  for (const raw of aaData) {
+    if (!Array.isArray(raw)) continue;
+    if (hotelId != null && asNumber(raw, IDX.HOTEL_ID) !== hotelId) continue;
+
+    const roomTypeId = asNumber(raw, IDX.ROOM_TYPE_ID);
+    const price = asNumber(raw, IDX.PRICE);
+    if (roomTypeId == null || price == null || price <= 0) continue;
+
+    const room = catalog.get(roomTypeId);
+    if (!room) continue;
+
+    if (room.roomCount === 1) {
+      if (priceOneRoom == null || price < priceOneRoom) priceOneRoom = price;
+    } else if (room.roomCount === 2) {
+      if (priceTwoRooms == null || price < priceTwoRooms) priceTwoRooms = price;
+    } else if (room.roomCount === 3) {
+      if (priceThreeRooms == null || price < priceThreeRooms) {
+        priceThreeRooms = price;
+      }
+    }
+  }
+
+  return { priceOneRoom, priceTwoRooms, priceThreeRooms };
+}
+
 export function extractFromTourRows(
   payload: unknown,
   refererUrl = "",
+  roomCatalog?: Map<number, RoomCatalogEntry>,
 ): {
   hotelId: number | null;
   name: string;
@@ -118,6 +214,9 @@ export function extractFromTourRows(
   photoUrl: string;
   latitude: number;
   longitude: number;
+  priceOneRoom: number | null;
+  priceTwoRooms: number | null;
+  priceThreeRooms: number | null;
 } {
   const root = payload as {
     GetToursResult?: { Data?: { aaData?: unknown[] } };
@@ -138,6 +237,15 @@ export function extractFromTourRows(
   }
 
   const hotelId = asNumber(row, IDX.HOTEL_ID);
+  const prices =
+    roomCatalog && roomCatalog.size > 0
+      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog)
+      : {
+          priceOneRoom: null,
+          priceTwoRooms: null,
+          priceThreeRooms: null,
+        };
+
   return {
     hotelId,
     name: asString(row, IDX.HOTEL_NAME) || "Hotel",
@@ -145,5 +253,8 @@ export function extractFromTourRows(
     photoUrl: hotelPhotoUrl(hotelId, asString(row, IDX.PHOTO)),
     latitude,
     longitude,
+    priceOneRoom: prices.priceOneRoom,
+    priceTwoRooms: prices.priceTwoRooms,
+    priceThreeRooms: prices.priceThreeRooms,
   };
 }

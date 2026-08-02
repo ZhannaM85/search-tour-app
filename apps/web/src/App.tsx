@@ -672,13 +672,19 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
-                        {n.priceOneRoom
-                          ? `1 room: ${formatPrice(n.priceOneRoom)}`
-                          : null}
-                        {n.priceOneRoom && n.priceTwoRooms ? " · " : null}
-                        {n.priceTwoRooms
-                          ? `2 rooms: ${formatPrice(n.priceTwoRooms)}`
-                          : null}
+                        {[
+                          n.priceOneRoom
+                            ? `1 room: ${formatPrice(n.priceOneRoom)}`
+                            : null,
+                          n.priceTwoRooms
+                            ? `2 rooms: ${formatPrice(n.priceTwoRooms)}`
+                            : null,
+                          n.priceThreeRooms
+                            ? `3 rooms: ${formatPrice(n.priceThreeRooms)}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </div>
                       {n.notes ? (
                         <p className="mt-1 text-sm text-slate-700">{n.notes}</p>

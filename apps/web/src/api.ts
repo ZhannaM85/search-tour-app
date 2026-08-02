@@ -7,6 +7,12 @@ export type ParsedHotel = {
   photoUrl: string;
   latitude: number;
   longitude: number;
+  /** Cheapest 1-room tour price (joined via hotel room catalog). */
+  priceOneRoom: number | null;
+  /** Cheapest 2-room tour price (joined via hotel room catalog). */
+  priceTwoRooms: number | null;
+  /** Cheapest 3-room tour price (joined via hotel room catalog). */
+  priceThreeRooms: number | null;
   refererUrl?: string;
 };
 

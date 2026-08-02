@@ -96,6 +96,9 @@ function HotelMarker({
           {note.priceTwoRooms ? (
             <div>2 rooms: {formatPrice(note.priceTwoRooms)}</div>
           ) : null}
+          {note.priceThreeRooms ? (
+            <div>3 rooms: {formatPrice(note.priceThreeRooms)}</div>
+          ) : null}
           {note.priceOneRoom ? (
             <div>1 room: {formatPrice(note.priceOneRoom)}</div>
           ) : null}

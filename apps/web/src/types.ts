@@ -8,6 +8,7 @@ export type HotelNote = {
   longitude: number;
   priceOneRoom: string;
   priceTwoRooms: string;
+  priceThreeRooms: string;
   notes: string;
   favorite: boolean;
   createdAt: string;

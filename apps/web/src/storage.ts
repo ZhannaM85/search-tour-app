@@ -31,6 +31,8 @@ function normalizeNote(value: unknown): HotelNote | null {
     longitude: n.longitude,
     priceOneRoom: typeof n.priceOneRoom === "string" ? n.priceOneRoom : "",
     priceTwoRooms: typeof n.priceTwoRooms === "string" ? n.priceTwoRooms : "",
+    priceThreeRooms:
+      typeof n.priceThreeRooms === "string" ? n.priceThreeRooms : "",
     notes: typeof n.notes === "string" ? n.notes : "",
     favorite: Boolean(n.favorite),
     createdAt: typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),

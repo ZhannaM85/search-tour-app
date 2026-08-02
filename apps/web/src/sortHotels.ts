@@ -6,7 +6,9 @@ export type SortMode =
   | "one-asc"
   | "one-desc"
   | "two-asc"
-  | "two-desc";
+  | "two-desc"
+  | "three-asc"
+  | "three-desc";
 
 function priceNumber(raw: string): number | null {
   const digits = parsePriceDigits(raw);
@@ -43,6 +45,14 @@ export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
     case "two-desc":
       return list.sort((a, b) =>
         comparePrices(a.priceTwoRooms, b.priceTwoRooms, false),
+      );
+    case "three-asc":
+      return list.sort((a, b) =>
+        comparePrices(a.priceThreeRooms, b.priceThreeRooms, true),
+      );
+    case "three-desc":
+      return list.sort((a, b) =>
+        comparePrices(a.priceThreeRooms, b.priceThreeRooms, false),
       );
     case "recent":
     default:

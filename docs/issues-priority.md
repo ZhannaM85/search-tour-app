@@ -21,6 +21,7 @@ _Use the same curl response the app already fetches; stop asking for prices by h
 | [#2](https://github.com/ZhannaM85/search-tour-app/issues/2) | 🔧 In progress | Auto-fill tour prices (esp. 2 rooms) from curl response | Join `rooms[].roomCount` via `[44]`. Price = full `[88]` (not promo `[42]`). Honor referer `operatorIds` / `mealsIds`. |
 | [#4](https://github.com/ZhannaM85/search-tour-app/issues/4) | 🔍 Pending validation | Store tour operator with each captured price | Per-price operators from aaData[18]; form (read-only + pencil), list, map; persist/export. Awaiting confirmation before closing. |
 | [#3](https://github.com/ZhannaM85/search-tour-app/issues/3) | ⬜ Open | Per-hotel price refresh icon (no bulk refresh) | **After #2.** Icon on each hotel row only; refresh that hotel’s prices. No bulk/all refresh |
+| [#7](https://github.com/ZhannaM85/search-tour-app/issues/7) | ⬜ Open | Populate hotel stars, rating, and vote count | **Investigate first:** available in GetTours `aaData` and/or hotel-page SSR? Then persist + show (e.g. `5★ · 9.4 (233)`) |
 
 ---
 

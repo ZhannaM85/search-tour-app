@@ -288,14 +288,14 @@ export function parseRefererPriceFilters(refererUrl: string): TourPriceFilters {
 }
 
 /**
- * Prefer full site price `[88]` when > 0.
- * If `[88]` is explicitly 0, skip (net/promo-only row not shown as the button).
- * Otherwise fall back to `[42]`.
+ * Prefer full site price `[88]` when > 0 (matches the yellow button when both
+ * exist; promo/net `[42]` can be lower).
+ * When `[88]` is 0 or missing (common for some operators e.g. RESORT HOLIDAY),
+ * fall back to `[42]`.
  */
 function tourPrice(row: unknown[]): number | null {
   const full = asNumber(row, IDX.FULL_PRICE);
   if (full != null && full > 0) return full;
-  if (full === 0) return null;
   const price = asNumber(row, IDX.PRICE);
   if (price != null && price > 0) return price;
   return null;

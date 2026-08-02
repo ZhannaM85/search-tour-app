@@ -9,7 +9,7 @@ _Keep the personal shortlist trustworthy as hotels are added from tour search._
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
-| [#1](https://github.com/ZhannaM85/search-tour-app/issues/1) | 🔍 Pending validation | Tour search: don't allow duplicate hotels | Warn on load + block save. Match `hotelId`, then pageUrl, then name+coords (covers older notes with null hotelId). Awaiting confirmation before closing. |
+| [#1](https://github.com/ZhannaM85/search-tour-app/issues/1) | 🔍 Pending validation | Tour search: don't allow duplicate hotels | On load, open existing match for edit (fresh prices + keep notes); Update saves in place. Match hotelId → pageUrl → name+coords. Awaiting confirmation before closing. |
 
 ---
 

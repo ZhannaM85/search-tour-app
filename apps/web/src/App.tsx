@@ -82,29 +82,6 @@ export default function App() {
     [notes],
   );
 
-  /** When adding (not editing), disable Save if this hotel is already shortlisted. */
-  const duplicateOfForm = useMemo(() => {
-    if (form.id != null) return undefined;
-    const lat = Number(form.latitude);
-    const lng = Number(form.longitude);
-    const hotelId = form.hotelId ? Number(form.hotelId) : null;
-    return findDuplicateHotel(notes, {
-      hotelId: hotelId != null && Number.isFinite(hotelId) ? hotelId : null,
-      pageUrl: form.pageUrl,
-      name: form.name,
-      latitude: Number.isFinite(lat) ? lat : undefined,
-      longitude: Number.isFinite(lng) ? lng : undefined,
-    });
-  }, [
-    form.id,
-    form.hotelId,
-    form.pageUrl,
-    form.name,
-    form.latitude,
-    form.longitude,
-    notes,
-  ]);
-
   function selectHotel(id: string) {
     setFocusId(id);
     setFocusNonce((n) => n + 1);
@@ -133,27 +110,6 @@ export default function App() {
     setStatus("Fetching tour data…");
     try {
       const parsed = await parseTourCurl(form.curl);
-      setForm((f) => ({
-        ...f,
-        name: parsed.name,
-        pageUrl: parsed.pageUrl || f.pageUrl,
-        photoUrl: parsed.photoUrl || f.photoUrl,
-        hotelId: parsed.hotelId != null ? String(parsed.hotelId) : "",
-        latitude: String(parsed.latitude),
-        longitude: String(parsed.longitude),
-        priceOneRoom:
-          parsed.priceOneRoom != null
-            ? String(parsed.priceOneRoom)
-            : f.priceOneRoom,
-        priceTwoRooms:
-          parsed.priceTwoRooms != null
-            ? String(parsed.priceTwoRooms)
-            : f.priceTwoRooms,
-        priceThreeRooms:
-          parsed.priceThreeRooms != null
-            ? String(parsed.priceThreeRooms)
-            : f.priceThreeRooms,
-      }));
       const duplicate = findDuplicateHotel(notes, {
         hotelId: parsed.hotelId,
         pageUrl: parsed.pageUrl,
@@ -161,10 +117,35 @@ export default function App() {
         latitude: parsed.latitude,
         longitude: parsed.longitude,
       });
+      setForm((f) => ({
+        ...f,
+        // Already shortlisted → edit that entry (keep notes/favorite).
+        id: duplicate?.id ?? null,
+        name: parsed.name,
+        pageUrl: parsed.pageUrl || f.pageUrl,
+        photoUrl: parsed.photoUrl || duplicate?.photoUrl || f.photoUrl,
+        hotelId: parsed.hotelId != null ? String(parsed.hotelId) : "",
+        latitude: String(parsed.latitude),
+        longitude: String(parsed.longitude),
+        priceOneRoom:
+          parsed.priceOneRoom != null
+            ? String(parsed.priceOneRoom)
+            : (duplicate?.priceOneRoom ?? f.priceOneRoom),
+        priceTwoRooms:
+          parsed.priceTwoRooms != null
+            ? String(parsed.priceTwoRooms)
+            : (duplicate?.priceTwoRooms ?? f.priceTwoRooms),
+        priceThreeRooms:
+          parsed.priceThreeRooms != null
+            ? String(parsed.priceThreeRooms)
+            : (duplicate?.priceThreeRooms ?? f.priceThreeRooms),
+        notes: duplicate?.notes ?? f.notes,
+        favorite: duplicate?.favorite ?? f.favorite,
+      }));
       if (duplicate) {
         selectHotel(duplicate.id);
         setStatus(
-          `“${duplicate.name}” is already on your shortlist. Open it from the list to edit.`,
+          `“${duplicate.name}” is already on your shortlist — review prices and click Update.`,
         );
       } else {
         const priceBits: string[] = [];
@@ -211,27 +192,20 @@ export default function App() {
     }
 
     const hotelId = form.hotelId ? Number(form.hotelId) : null;
-    // New saves: block duplicates of the same tours hotel.
-    if (form.id == null) {
-      const duplicate = findDuplicateHotel(notes, {
-        hotelId,
-        pageUrl: form.pageUrl,
-        name: form.name,
-        latitude: lat,
-        longitude: lng,
-      });
-      if (duplicate) {
-        selectHotel(duplicate.id);
-        setStatus(
-          `“${duplicate.name}” is already on your shortlist. Open it from the list to edit.`,
-        );
-        return;
-      }
-    }
-
-    const now = new Date().toISOString();
-    const id = form.id ?? newNoteId();
+    // Creating: if this hotel is already shortlisted, update that entry instead.
+    const duplicate =
+      form.id == null
+        ? findDuplicateHotel(notes, {
+            hotelId,
+            pageUrl: form.pageUrl,
+            name: form.name,
+            latitude: lat,
+            longitude: lng,
+          })
+        : undefined;
+    const id = form.id ?? duplicate?.id ?? newNoteId();
     const existing = notes.find((n) => n.id === id);
+    const now = new Date().toISOString();
     const photoUrl =
       form.photoUrl.trim() ||
       existing?.photoUrl ||
@@ -258,7 +232,11 @@ export default function App() {
     persist(next);
     selectHotel(id);
     setForm(emptyForm());
-    setStatus(`Saved “${note.name}”.`);
+    setStatus(
+      existing || duplicate
+        ? `Updated “${note.name}”.`
+        : `Saved “${note.name}”.`,
+    );
   }
 
   function handleEdit(note: HotelNote) {
@@ -520,13 +498,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={Boolean(duplicateOfForm)}
-              title={
-                duplicateOfForm
-                  ? `“${duplicateOfForm.name}” is already on your shortlist`
-                  : undefined
-              }
-              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:bg-slate-300"
+              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
             >
               {form.id ? "Update" : "Save to shortlist"}
             </button>

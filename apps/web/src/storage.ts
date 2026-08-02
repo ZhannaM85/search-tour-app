@@ -1,6 +1,27 @@
 import type { HotelNote, PriceHistoryEntry } from "./types";
 
 const STORAGE_KEY = "hotel-shortlist.notes.v1";
+const BEST_PRICE_PERCENT_KEY = "hotel-shortlist.bestPricePercent.v1";
+
+/** Default: price is the main factor in “best overall” sort. */
+export const DEFAULT_BEST_PRICE_PERCENT = 60;
+
+export function loadBestPricePercent(): number {
+  try {
+    const raw = localStorage.getItem(BEST_PRICE_PERCENT_KEY);
+    if (raw == null) return DEFAULT_BEST_PRICE_PERCENT;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return DEFAULT_BEST_PRICE_PERCENT;
+    return Math.min(100, Math.max(0, Math.round(n)));
+  } catch {
+    return DEFAULT_BEST_PRICE_PERCENT;
+  }
+}
+
+export function saveBestPricePercent(percent: number): void {
+  const n = Math.min(100, Math.max(0, Math.round(percent)));
+  localStorage.setItem(BEST_PRICE_PERCENT_KEY, String(n));
+}
 
 export function loadNotes(): HotelNote[] {
   try {

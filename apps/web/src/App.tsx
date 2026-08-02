@@ -20,12 +20,14 @@ import {
   type SortField,
   type SortMode,
 } from "./sortHotels";
-import { RecentSortIcon } from "./SortIcons";
+import { BestSortIcon, RecentSortIcon } from "./SortIcons";
 import {
   findDuplicateHotel,
+  loadBestPricePercent,
   loadNotes,
   newNoteId,
   removeNote,
+  saveBestPricePercent,
   saveNotes,
   upsertNote,
 } from "./storage";
@@ -217,6 +219,10 @@ export default function App() {
   const [priceFilterRoom, setPriceFilterRoom] = useState<"1" | "2" | "3">("2");
   /** Max price digits; empty = no price filter. */
   const [priceMax, setPriceMax] = useState("");
+  /** Price share of “best overall” (rest is weighted rating). Persisted. */
+  const [bestPricePercent, setBestPricePercent] = useState(
+    loadBestPricePercent,
+  );
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [priceFlashById, setPriceFlashById] = useState<
     Record<string, PriceFlash>
@@ -259,7 +265,13 @@ export default function App() {
         return Number.isFinite(price) && price <= maxPrice;
       });
     }
-    return sortHotels(list, sortMode, ratingPrior);
+    return sortHotels(
+      list,
+      sortMode,
+      ratingPrior,
+      priceFilterRoom,
+      bestPricePercent,
+    );
   }, [
     notes,
     favoritesOnly,
@@ -268,6 +280,7 @@ export default function App() {
     ratingBand,
     priceFilterRoom,
     priceMax,
+    bestPricePercent,
     ratingPrior,
   ]);
 
@@ -301,6 +314,12 @@ export default function App() {
       return;
     }
     setSortMode(toSortMode(field, defaultSortDir(field)));
+  }
+
+  function updateBestPricePercent(value: number) {
+    const n = Math.min(100, Math.max(0, Math.round(value)));
+    setBestPricePercent(n);
+    saveBestPricePercent(n);
   }
 
   const sortChipClass = (active: boolean) =>
@@ -1148,6 +1167,22 @@ export default function App() {
               >
                 <button
                   type="button"
+                  className={sortChipClass(sortField === "best")}
+                  aria-pressed={sortField === "best"}
+                  title={
+                    sortField === "best"
+                      ? sortDir === "desc"
+                        ? `Best overall (${bestPricePercent}% ${priceFilterRoom}-room price, ${100 - bestPricePercent}% weighted) — click to reverse`
+                        : `Worst overall first — click for best first`
+                      : `Best overall: ${bestPricePercent}% price + ${100 - bestPricePercent}% weighted rating`
+                  }
+                  aria-label="Sort by best overall"
+                  onClick={() => selectSortField("best")}
+                >
+                  <BestSortIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
                   className={sortChipClass(sortField === "recent")}
                   aria-pressed={sortField === "recent"}
                   title={
@@ -1348,6 +1383,31 @@ export default function App() {
                   </span>
                 </label>
               </div>
+              {sortField === "best" ? (
+                <label className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-700">
+                  <span className="shrink-0 font-medium text-slate-800">
+                    Best mix
+                  </span>
+                  <span className="tabular-nums text-slate-600">
+                    Price {bestPricePercent}%
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={bestPricePercent}
+                    onChange={(e) =>
+                      updateBestPricePercent(Number(e.target.value))
+                    }
+                    className="h-2 w-40 max-w-full accent-teal-600"
+                    aria-valuetext={`${bestPricePercent}% price, ${100 - bestPricePercent}% weighted rating`}
+                  />
+                  <span className="tabular-nums text-slate-600">
+                    Weighted {100 - bestPricePercent}%
+                  </span>
+                </label>
+              ) : null}
             </div>
           ) : null}
 

@@ -10,11 +10,14 @@ export type SortField =
   | "name"
   | "rating"
   | "weighted"
+  | "best"
   | "one"
   | "two"
   | "three";
 
 export type SortDir = "asc" | "desc";
+
+export type PriceRoom = "1" | "2" | "3";
 
 export type SortMode =
   | "recent-desc"
@@ -25,6 +28,8 @@ export type SortMode =
   | "rating-asc"
   | "weighted-desc"
   | "weighted-asc"
+  | "best-desc"
+  | "best-asc"
   | "one-asc"
   | "one-desc"
   | "two-asc"
@@ -43,6 +48,7 @@ export function defaultSortDir(field: SortField): SortDir {
     case "recent":
     case "rating":
     case "weighted":
+    case "best":
     default:
       return "desc";
   }
@@ -65,6 +71,16 @@ function priceNumber(raw: string): number | null {
   if (!digits) return null;
   const n = Number(digits);
   return Number.isFinite(n) ? n : null;
+}
+
+function noteRoomPrice(note: HotelNote, room: PriceRoom): number | null {
+  const raw =
+    room === "1"
+      ? note.priceOneRoom
+      : room === "2"
+        ? note.priceTwoRooms
+        : note.priceThreeRooms;
+  return priceNumber(raw);
 }
 
 /** Missing prices always sort last. */
@@ -113,10 +129,83 @@ function compareRating(
   return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 }
 
+/**
+ * Rank-based scores in [0, 1]: best rank → 1, worst → 0.
+ * Missing values get the worst rank. Ties share the average rank.
+ * Unlike min–max, a small edge (e.g. 4 000 ₽ cheaper) still earns a full win.
+ */
+function rankScores(
+  values: Array<number | null>,
+  higherIsBetter: boolean,
+): number[] {
+  const indexed = values.map((v, i) => ({ v, i }));
+  indexed.sort((a, b) => {
+    if (a.v == null && b.v == null) return 0;
+    if (a.v == null) return 1;
+    if (b.v == null) return -1;
+    return higherIsBetter ? b.v - a.v : a.v - b.v;
+  });
+  const n = values.length;
+  if (n === 1) return [values[0] == null ? 0 : 1];
+  const rankOf = new Array<number>(n);
+  let i = 0;
+  while (i < n) {
+    let j = i;
+    while (
+      j + 1 < n &&
+      indexed[j + 1].v === indexed[i].v
+    ) {
+      j++;
+    }
+    // Average 0-based rank for the tie group, then map to [0,1] (best=1).
+    const avgRank = (i + j) / 2;
+    const score = 1 - avgRank / (n - 1);
+    for (let k = i; k <= j; k++) {
+      rankOf[indexed[k].i] = indexed[i].v == null ? 0 : score;
+    }
+    i = j + 1;
+  }
+  return rankOf;
+}
+
+/** Clamp a price-weight percent to 0–100 (integer). */
+export function clampBestPricePercent(value: number): number {
+  if (!Number.isFinite(value)) return 60;
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+/**
+ * Composite “best overall” score in [0, 1]:
+ * cheaper room price + higher weighted rating, blended by `pricePercent`
+ * (e.g. 60 → 60% price, 40% weighted). Ranks within the current list.
+ */
+export function bestOverallScores(
+  notes: HotelNote[],
+  prior: RatingPrior,
+  priceRoom: PriceRoom,
+  pricePercent = 60,
+): Map<string, number> {
+  const priceW = clampBestPricePercent(pricePercent) / 100;
+  const ratingW = 1 - priceW;
+  const prices = notes.map((n) => noteRoomPrice(n, priceRoom));
+  const weighteds = notes.map((n) =>
+    weightedRating(n.rating, n.reviewCount, prior),
+  );
+  const priceN = rankScores(prices, false);
+  const weightedN = rankScores(weighteds, true);
+  const out = new Map<string, number>();
+  notes.forEach((n, i) => {
+    out.set(n.id, priceN[i] * priceW + weightedN[i] * ratingW);
+  });
+  return out;
+}
+
 export function sortHotels(
   notes: HotelNote[],
   mode: SortMode,
   prior?: RatingPrior,
+  priceRoom: PriceRoom = "2",
+  bestPricePercent = 60,
 ): HotelNote[] {
   const list = [...notes];
   switch (mode) {
@@ -156,6 +245,25 @@ export function sortHotels(
         if (fav !== 0) return fav;
         return compareRating(a, b, false, prior, true);
       });
+    case "best-asc":
+    case "best-desc": {
+      const priorSafe = prior ?? { mean: 8.5, strength: 250 };
+      const scores = bestOverallScores(
+        list,
+        priorSafe,
+        priceRoom,
+        bestPricePercent,
+      );
+      const ascending = mode === "best-asc";
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        const aS = scores.get(a.id) ?? 0;
+        const bS = scores.get(b.id) ?? 0;
+        if (aS !== bS) return ascending ? aS - bS : bS - aS;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
+    }
     case "one-asc":
       return list.sort((a, b) =>
         comparePrices(a.priceOneRoom, b.priceOneRoom, true),

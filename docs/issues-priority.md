@@ -9,7 +9,7 @@ _Keep the personal shortlist trustworthy as hotels are added from tour search._
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
-| [#1](https://github.com/ZhannaM85/search-tour-app/issues/1) | ⬜ Open | Tour search: don't allow duplicate hotels | Match on `hotelId` when present; block or update existing instead of creating a second UUID entry |
+| [#1](https://github.com/ZhannaM85/search-tour-app/issues/1) | 🔍 Pending validation | Tour search: don't allow duplicate hotels | Match on `hotelId` when present; block create + focus existing instead of a second UUID entry. Awaiting confirmation before closing. |
 
 ---
 

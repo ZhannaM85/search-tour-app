@@ -42,6 +42,13 @@ export function saveNotes(notes: HotelNote[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
 }
 
+export function findNoteByHotelId(
+  notes: HotelNote[],
+  hotelId: number,
+): HotelNote | undefined {
+  return notes.find((n) => n.hotelId === hotelId);
+}
+
 export function upsertNote(notes: HotelNote[], note: HotelNote): HotelNote[] {
   const idx = notes.findIndex((n) => n.id === note.id);
   if (idx === -1) return [...notes, note];

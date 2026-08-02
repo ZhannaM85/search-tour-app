@@ -7,6 +7,7 @@ import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
 import { sortHotels, type SortMode } from "./sortHotels";
 import {
+  findNoteByHotelId,
   loadNotes,
   newNoteId,
   removeNote,
@@ -140,10 +141,22 @@ export default function App() {
       return;
     }
 
+    const hotelId = form.hotelId ? Number(form.hotelId) : null;
+    // New saves: block duplicates of the same tours hotel (same hotelId).
+    if (form.id == null && hotelId != null && Number.isFinite(hotelId)) {
+      const duplicate = findNoteByHotelId(notes, hotelId);
+      if (duplicate) {
+        selectHotel(duplicate.id);
+        setStatus(
+          `“${duplicate.name}” is already on your shortlist. Open it from the list to edit.`,
+        );
+        return;
+      }
+    }
+
     const now = new Date().toISOString();
     const id = form.id ?? newNoteId();
     const existing = notes.find((n) => n.id === id);
-    const hotelId = form.hotelId ? Number(form.hotelId) : null;
     const photoUrl =
       form.photoUrl.trim() ||
       existing?.photoUrl ||

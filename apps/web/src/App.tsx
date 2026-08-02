@@ -257,6 +257,14 @@ export default function App() {
 
   useEffect(() => {
     if (!isPublicViewer) return;
+    document.title = "Hotel shortlist (viewer)";
+    return () => {
+      document.title = "Hotel shortlist";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isPublicViewer) return;
     let cancelled = false;
     const url = `${import.meta.env.BASE_URL}shortlist.json`;
     (async () => {
@@ -1040,9 +1048,16 @@ export default function App() {
     <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:h-[100dvh] lg:grid-cols-2 lg:overflow-hidden lg:py-4">
       <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
         <header>
-          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-            {isPublicViewer ? "Shared shortlist" : "Personal shortlist"}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
+              {isPublicViewer ? "Shared shortlist" : "Personal shortlist"}
+            </p>
+            {isPublicViewer ? (
+              <span className="rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-teal-800">
+                Read-only viewer
+              </span>
+            ) : null}
+          </div>
           <h1 className="mt-1 text-3xl font-bold text-slate-900">
             Hotel shortlist
           </h1>

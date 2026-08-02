@@ -42,6 +42,6 @@ _Small presentation fixes from live use._
 |---|--------|-------|-------|
 | [#6](https://github.com/ZhannaM85/search-tour-app/issues/6) | 🔍 Pending validation | Sort displayed room prices by room count (1 → 2 → 3) | Map popup now 1 → 2 → 3 (list already was). Awaiting confirmation before closing. |
 | [#8](https://github.com/ZhannaM85/search-tour-app/issues/8) | 🔍 Pending validation | Add sorting by hotel name | Name A→Z via localeCompare; favorites still pin first. Awaiting confirmation before closing. |
-| [#9](https://github.com/ZhannaM85/search-tour-app/issues/9) | ⬜ Open | Replace row actions Refresh/Edit/Delete/Open with icons | Icon buttons with aria-labels; same behaviors |
+| [#9](https://github.com/ZhannaM85/search-tour-app/issues/9) | 🔍 Pending validation | Replace row actions Refresh/Edit/Delete/Open with icons | Icon buttons + aria-labels; refresh spins while loading. Awaiting confirmation before closing. |
 
 ---

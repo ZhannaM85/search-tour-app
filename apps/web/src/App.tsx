@@ -1,7 +1,11 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import HotelsMap from "./HotelsMap";
 import OperatorField from "./OperatorField";
+import PencilIcon from "./PencilIcon";
+import RefreshIcon from "./RefreshIcon";
+import ExternalLinkIcon from "./ExternalLinkIcon";
 import StarIcon from "./StarIcon";
+import TrashIcon from "./TrashIcon";
 import { parseTourCurl, refreshHotelPrices } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
@@ -1059,10 +1063,10 @@ export default function App() {
                       ) : null}
                       </div>
                     </div>
-                    <div className="flex shrink-0 flex-col gap-1">
+                    <div className="flex shrink-0 flex-col items-center gap-0.5">
                       <button
                         type="button"
-                        className="text-xs text-slate-600 hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                        className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                         disabled={
                           !n.tourRequestUrl.trim() || refreshingId === n.id
                         }
@@ -1071,42 +1075,57 @@ export default function App() {
                             ? "Refresh tour prices"
                             : "Load a curl and save once before refreshing"
                         }
+                        aria-label={
+                          refreshingId === n.id
+                            ? `Refreshing prices for ${n.name}`
+                            : `Refresh prices for ${n.name}`
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           void handleRefreshPrices(n.id);
                         }}
                       >
-                        {refreshingId === n.id ? "Refreshing…" : "Refresh"}
+                        <RefreshIcon
+                          className={`h-4 w-4 ${
+                            refreshingId === n.id ? "animate-spin" : ""
+                          }`}
+                        />
                       </button>
                       <button
                         type="button"
-                        className="text-xs text-slate-600 hover:underline"
+                        className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        title="Edit"
+                        aria-label={`Edit ${n.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEdit(n);
                         }}
                       >
-                        Edit
+                        <PencilIcon className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
-                        className="text-xs text-rose-600 hover:underline"
+                        className="rounded p-1 text-rose-500 hover:bg-rose-50 hover:text-rose-700"
+                        title="Delete"
+                        aria-label={`Delete ${n.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(n.id);
                         }}
                       >
-                        Delete
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                       {n.pageUrl ? (
                         <a
-                          className="text-xs text-teal-700 hover:underline"
+                          className="rounded p-1 text-teal-600 hover:bg-teal-50 hover:text-teal-800"
                           href={n.pageUrl}
                           target="_blank"
                           rel="noreferrer"
+                          title="Open hotel page"
+                          aria-label={`Open ${n.name} on sletat`}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          Open
+                          <ExternalLinkIcon className="h-4 w-4" />
                         </a>
                       ) : null}
                     </div>

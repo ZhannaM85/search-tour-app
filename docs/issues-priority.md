@@ -31,7 +31,7 @@ _Prevent accidental loss of in-progress edits and destructive actions._
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
 | [#5](https://github.com/ZhannaM85/search-tour-app/issues/5) | ⬜ Open | Confirm before Cancel edit discards unsaved changes | Modal (or confirm) when Cancel edit would drop dirty form fields |
-| [#10](https://github.com/ZhannaM85/search-tour-app/issues/10) | ⬜ Open | Confirm deletion with an in-app modal | Replace `window.confirm`; share dialog approach with #5 if possible |
+| [#10](https://github.com/ZhannaM85/search-tour-app/issues/10) | 🔍 Pending validation | Confirm deletion with an in-app modal | Shared ConfirmDialog; Cancel / Delete. Awaiting confirmation before closing. |
 
 ---
 

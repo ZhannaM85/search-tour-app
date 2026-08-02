@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
+import ConfirmDialog from "./ConfirmDialog";
 import HotelsMap from "./HotelsMap";
 import OperatorField from "./OperatorField";
 import PencilIcon from "./PencilIcon";
@@ -155,6 +156,10 @@ export default function App() {
   const [priceFlashById, setPriceFlashById] = useState<
     Record<string, PriceFlash>
   >({});
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(() => {
@@ -419,13 +424,19 @@ export default function App() {
   function handleDelete(id: string) {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
-    if (!confirm(`Remove “${note.name}”?`)) return;
+    setDeleteConfirm({ id: note.id, name: note.name });
+  }
+
+  function confirmDelete() {
+    if (!deleteConfirm) return;
+    const { id, name } = deleteConfirm;
+    setDeleteConfirm(null);
     persist(removeNote(notes, id));
     if (form.id === id) {
       setForm(emptyForm());
       setOperatorLockKey((k) => k + 1);
     }
-    setStatus(`Removed “${note.name}”.`);
+    setStatus(`Removed “${name}”.`);
   }
 
   function handleToggleFavorite(id: string) {
@@ -1144,6 +1155,20 @@ export default function App() {
           focusNonce={focusNonce}
         />
       </section>
+
+      <ConfirmDialog
+        open={deleteConfirm != null}
+        title="Delete hotel?"
+        message={
+          deleteConfirm
+            ? `Remove “${deleteConfirm.name}” from your shortlist? This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }

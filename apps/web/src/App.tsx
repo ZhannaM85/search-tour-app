@@ -196,7 +196,7 @@ export default function App() {
   const [focusId, setFocusId] = useState<string | null>(null);
   const [focusNonce, setFocusNonce] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [sortMode, setSortMode] = useState<SortMode>("recent");
+  const [sortMode, setSortMode] = useState<SortMode>("recent-desc");
   const [nameQuery, setNameQuery] = useState("");
   /** Floor band of guest rating: 8 → 8.0–8.99, 9 → 9.0–9.99. */
   const [ratingBand, setRatingBand] = useState<"all" | "8" | "9">("all");
@@ -1111,9 +1111,12 @@ export default function App() {
                   onChange={(e) => setSortMode(e.target.value as SortMode)}
                   className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
                 >
-                  <option value="recent">Sort: recent</option>
-                  <option value="name">Sort: name</option>
-                  <option value="rating">Sort: rating</option>
+                  <option value="recent-desc">Recent: newest first</option>
+                  <option value="recent-asc">Recent: oldest first</option>
+                  <option value="name-asc">Name: A → Z</option>
+                  <option value="name-desc">Name: Z → A</option>
+                  <option value="rating-desc">Rating: high → low</option>
+                  <option value="rating-asc">Rating: low → high</option>
                   <option value="one-asc">1 room: low → high</option>
                   <option value="one-desc">1 room: high → low</option>
                   <option value="two-asc">2 rooms: low → high</option>

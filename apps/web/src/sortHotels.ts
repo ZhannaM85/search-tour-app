@@ -2,9 +2,12 @@ import type { HotelNote } from "./types";
 import { parsePriceDigits } from "./formatPrice";
 
 export type SortMode =
-  | "recent"
-  | "name"
-  | "rating"
+  | "recent-desc"
+  | "recent-asc"
+  | "name-asc"
+  | "name-desc"
+  | "rating-desc"
+  | "rating-asc"
   | "one-asc"
   | "one-desc"
   | "two-asc"
@@ -34,14 +37,16 @@ function compareFavoritesFirst(a: HotelNote, b: HotelNote): number {
   return 0;
 }
 
-/** Higher rating first; missing ratings last. Ties: more reviews, then name. */
-function compareRatingDesc(a: HotelNote, b: HotelNote): number {
+/** Missing ratings always sort last. Ties: more reviews, then name. */
+function compareRating(a: HotelNote, b: HotelNote, ascending: boolean): number {
   const aRating = a.rating;
   const bRating = b.rating;
   if (aRating == null && bRating == null) return 0;
   if (aRating == null) return 1;
   if (bRating == null) return -1;
-  if (aRating !== bRating) return bRating - aRating;
+  if (aRating !== bRating) {
+    return ascending ? aRating - bRating : bRating - aRating;
+  }
   const aVotes = a.reviewCount ?? -1;
   const bVotes = b.reviewCount ?? -1;
   if (aVotes !== bVotes) return bVotes - aVotes;
@@ -51,17 +56,29 @@ function compareRatingDesc(a: HotelNote, b: HotelNote): number {
 export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
   const list = [...notes];
   switch (mode) {
-    case "name":
+    case "name-asc":
       return list.sort((a, b) => {
         const fav = compareFavoritesFirst(a, b);
         if (fav !== 0) return fav;
         return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
       });
-    case "rating":
+    case "name-desc":
       return list.sort((a, b) => {
         const fav = compareFavoritesFirst(a, b);
         if (fav !== 0) return fav;
-        return compareRatingDesc(a, b);
+        return b.name.localeCompare(a.name, undefined, { sensitivity: "base" });
+      });
+    case "rating-asc":
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        return compareRating(a, b, true);
+      });
+    case "rating-desc":
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        return compareRating(a, b, false);
       });
     case "one-asc":
       return list.sort((a, b) =>
@@ -87,7 +104,13 @@ export function sortHotels(notes: HotelNote[], mode: SortMode): HotelNote[] {
       return list.sort((a, b) =>
         comparePrices(a.priceThreeRooms, b.priceThreeRooms, false),
       );
-    case "recent":
+    case "recent-asc":
+      return list.sort((a, b) => {
+        const fav = compareFavoritesFirst(a, b);
+        if (fav !== 0) return fav;
+        return a.updatedAt.localeCompare(b.updatedAt);
+      });
+    case "recent-desc":
     default:
       return list.sort((a, b) => {
         const fav = compareFavoritesFirst(a, b);

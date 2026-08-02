@@ -1,0 +1,42 @@
+{
+  // Cursor agent terminal allowlist for this repo.
+  // See https://cursor.com/docs/reference/permissions.md
+  // When this key is present, it replaces the IDE Settings allowlist for
+  // this workspace (per-user ~/.cursor/permissions.json entries merge in).
+  // Mirrored from turtle-steps-to-the-goal so gh issue logging does not prompt.
+  "terminalAllowlist": [
+    "gh issue create",
+    "gh issue edit",
+    "gh issue close",
+    "gh issue comment",
+    "gh issue view",
+    "gh issue list",
+    "gh pr create",
+    "gh run view",
+    "gh repo view",
+    "gh",
+    "git",
+    "npm",
+    "npx",
+    // Prettier needs its own entries: bare "npx" did not cover
+    // `npx prettier --write <paths>` in practice (2026-08-01).
+    "prettier",
+    "npx prettier",
+    "npx:prettier*",
+    "npm:run format*",
+    "node",
+    "zm-index",
+    "nvm",
+    "rg"
+  ],
+  // Steers Auto-review when a call still needs classifier approval —
+  // especially elevated retries after Windows sandbox failures.
+  "autoRun": {
+    "allow_instructions": [
+      "Allow gh issue create, gh issue edit, gh issue close, gh issue comment, gh issue view, gh issue list, gh repo view, and gh pr create without prompting.",
+      "Allow npx prettier --check and npx prettier --write against files inside this repo without prompting.",
+      "Allow npm run format and npm run format:check without prompting.",
+      "On Windows, when a command fails to spawn because the workspace_readwrite sandbox policy cannot be enforced, allow the identical command (including gh and git) to be retried with elevated/unsandboxed permissions without prompting."
+    ]
+  }
+}

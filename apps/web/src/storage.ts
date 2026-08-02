@@ -1,4 +1,4 @@
-import type { HotelNote } from "./types";
+import type { HotelNote, PriceHistoryEntry } from "./types";
 
 const STORAGE_KEY = "hotel-shortlist.notes.v1";
 
@@ -12,6 +12,24 @@ export function loadNotes(): HotelNote[] {
   } catch {
     return [];
   }
+}
+
+function normalizeHistory(value: unknown): PriceHistoryEntry[] {
+  if (!Array.isArray(value)) return [];
+  const out: PriceHistoryEntry[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const e = item as Record<string, unknown>;
+    if (typeof e.price !== "string" || typeof e.capturedAt !== "string") {
+      continue;
+    }
+    out.push({
+      price: e.price,
+      operator: typeof e.operator === "string" ? e.operator : "",
+      capturedAt: e.capturedAt,
+    });
+  }
+  return out;
 }
 
 function normalizeNote(value: unknown): HotelNote | null {
@@ -39,6 +57,11 @@ function normalizeNote(value: unknown): HotelNote | null {
       typeof n.operatorTwoRooms === "string" ? n.operatorTwoRooms : "",
     operatorThreeRooms:
       typeof n.operatorThreeRooms === "string" ? n.operatorThreeRooms : "",
+    tourRequestUrl: typeof n.tourRequestUrl === "string" ? n.tourRequestUrl : "",
+    tourRefererUrl: typeof n.tourRefererUrl === "string" ? n.tourRefererUrl : "",
+    priceHistoryOneRoom: normalizeHistory(n.priceHistoryOneRoom),
+    priceHistoryTwoRooms: normalizeHistory(n.priceHistoryTwoRooms),
+    priceHistoryThreeRooms: normalizeHistory(n.priceHistoryThreeRooms),
     notes: typeof n.notes === "string" ? n.notes : "",
     favorite: Boolean(n.favorite),
     createdAt: typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),

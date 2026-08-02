@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import HotelsMap from "./HotelsMap";
 import OperatorField from "./OperatorField";
 import StarIcon from "./StarIcon";
-import { parseTourCurl } from "./api";
+import { parseTourCurl, refreshHotelPrices } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
@@ -15,7 +15,8 @@ import {
   saveNotes,
   upsertNote,
 } from "./storage";
-import type { HotelNote } from "./types";
+import type { HotelNote, PriceHistoryEntry } from "./types";
+import { prependPriceHistory } from "./types";
 
 type FormState = {
   id: string | null;
@@ -32,6 +33,11 @@ type FormState = {
   operatorOneRoom: string;
   operatorTwoRooms: string;
   operatorThreeRooms: string;
+  tourRequestUrl: string;
+  tourRefererUrl: string;
+  priceHistoryOneRoom: PriceHistoryEntry[];
+  priceHistoryTwoRooms: PriceHistoryEntry[];
+  priceHistoryThreeRooms: PriceHistoryEntry[];
   notes: string;
   favorite: boolean;
 };
@@ -51,14 +57,64 @@ const emptyForm = (): FormState => ({
   operatorOneRoom: "",
   operatorTwoRooms: "",
   operatorThreeRooms: "",
+  tourRequestUrl: "",
+  tourRefererUrl: "",
+  priceHistoryOneRoom: [],
+  priceHistoryTwoRooms: [],
+  priceHistoryThreeRooms: [],
   notes: "",
   favorite: false,
 });
+
+type PriceFlash = {
+  one?: { from: string; to: string };
+  two?: { from: string; to: string };
+  three?: { from: string; to: string };
+};
 
 function formatPriceWithOperator(price: string, operator: string): string {
   const formatted = formatPrice(price);
   const op = operator.trim();
   return op ? `${formatted} (${op})` : formatted;
+}
+
+function formatHistoryWasLine(note: HotelNote): string | null {
+  const bits: string[] = [];
+  const h1 = note.priceHistoryOneRoom[0];
+  const h2 = note.priceHistoryTwoRooms[0];
+  const h3 = note.priceHistoryThreeRooms[0];
+  if (h1) bits.push(`1 room ${formatPriceWithOperator(h1.price, h1.operator)}`);
+  if (h2) bits.push(`2 rooms ${formatPriceWithOperator(h2.price, h2.operator)}`);
+  if (h3) bits.push(`3 rooms ${formatPriceWithOperator(h3.price, h3.operator)}`);
+  return bits.length ? `Was: ${bits.join(" · ")}` : null;
+}
+
+function formatPriceSlot(
+  label: string,
+  price: string,
+  operator: string,
+  flash?: { from: string; to: string },
+): ReactNode {
+  if (!price && !flash) return null;
+  if (flash) {
+    return (
+      <span key={label}>
+        {label}:{" "}
+        <span className="text-slate-400 line-through">
+          {formatPrice(flash.from)}
+        </span>
+        {" → "}
+        <span className="font-medium text-slate-800">
+          {formatPriceWithOperator(flash.to, operator)}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span key={label}>
+      {label}: {formatPriceWithOperator(price, operator)}
+    </span>
+  );
 }
 
 function bootstrapNotes(): { notes: HotelNote[]; filled: number } {
@@ -85,6 +141,10 @@ export default function App() {
   const [focusNonce, setFocusNonce] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("recent");
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [priceFlashById, setPriceFlashById] = useState<
+    Record<string, PriceFlash>
+  >({});
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(() => {
@@ -166,6 +226,14 @@ export default function App() {
           parsed.priceThreeRooms != null
             ? (parsed.operatorThreeRooms ?? "")
             : (duplicate?.operatorThreeRooms ?? f.operatorThreeRooms),
+        tourRequestUrl: parsed.requestUrl ?? f.tourRequestUrl,
+        tourRefererUrl: parsed.refererUrl ?? f.tourRefererUrl,
+        priceHistoryOneRoom:
+          duplicate?.priceHistoryOneRoom ?? f.priceHistoryOneRoom,
+        priceHistoryTwoRooms:
+          duplicate?.priceHistoryTwoRooms ?? f.priceHistoryTwoRooms,
+        priceHistoryThreeRooms:
+          duplicate?.priceHistoryThreeRooms ?? f.priceHistoryThreeRooms,
         notes: duplicate?.notes ?? f.notes,
         favorite: duplicate?.favorite ?? f.favorite,
       }));
@@ -264,6 +332,22 @@ export default function App() {
       operatorOneRoom: form.operatorOneRoom.trim(),
       operatorTwoRooms: form.operatorTwoRooms.trim(),
       operatorThreeRooms: form.operatorThreeRooms.trim(),
+      tourRequestUrl:
+        form.tourRequestUrl.trim() || existing?.tourRequestUrl || "",
+      tourRefererUrl:
+        form.tourRefererUrl.trim() || existing?.tourRefererUrl || "",
+      priceHistoryOneRoom:
+        form.priceHistoryOneRoom.length > 0
+          ? form.priceHistoryOneRoom
+          : (existing?.priceHistoryOneRoom ?? []),
+      priceHistoryTwoRooms:
+        form.priceHistoryTwoRooms.length > 0
+          ? form.priceHistoryTwoRooms
+          : (existing?.priceHistoryTwoRooms ?? []),
+      priceHistoryThreeRooms:
+        form.priceHistoryThreeRooms.length > 0
+          ? form.priceHistoryThreeRooms
+          : (existing?.priceHistoryThreeRooms ?? []),
       notes: form.notes.trim(),
       favorite: form.favorite,
       createdAt: existing?.createdAt ?? now,
@@ -300,6 +384,11 @@ export default function App() {
       operatorOneRoom: note.operatorOneRoom,
       operatorTwoRooms: note.operatorTwoRooms,
       operatorThreeRooms: note.operatorThreeRooms,
+      tourRequestUrl: note.tourRequestUrl,
+      tourRefererUrl: note.tourRefererUrl,
+      priceHistoryOneRoom: note.priceHistoryOneRoom,
+      priceHistoryTwoRooms: note.priceHistoryTwoRooms,
+      priceHistoryThreeRooms: note.priceHistoryThreeRooms,
       notes: note.notes,
       favorite: note.favorite,
     });
@@ -337,6 +426,133 @@ export default function App() {
         ? `Marked “${note.name}” as favorite.`
         : `Removed “${note.name}” from favorites.`,
     );
+  }
+
+  async function handleRefreshPrices(id: string) {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+    if (!note.tourRequestUrl.trim()) {
+      setStatus(
+        `“${note.name}” has no saved tour search — load a curl and save once before refreshing.`,
+      );
+      return;
+    }
+
+    setRefreshingId(id);
+    setStatus(`Refreshing prices for “${note.name}”…`);
+    try {
+      const refreshed = await refreshHotelPrices(
+        note.tourRequestUrl,
+        note.tourRefererUrl,
+      );
+      const now = new Date().toISOString();
+      const flash: PriceFlash = {};
+
+      let priceOneRoom = note.priceOneRoom;
+      let operatorOneRoom = note.operatorOneRoom;
+      let priceHistoryOneRoom = note.priceHistoryOneRoom;
+      if (refreshed.priceOneRoom != null) {
+        const next = String(refreshed.priceOneRoom);
+        if (note.priceOneRoom && note.priceOneRoom !== next) {
+          priceHistoryOneRoom = prependPriceHistory(note.priceHistoryOneRoom, {
+            price: note.priceOneRoom,
+            operator: note.operatorOneRoom,
+            capturedAt: now,
+          });
+          flash.one = { from: note.priceOneRoom, to: next };
+        }
+        priceOneRoom = next;
+        operatorOneRoom = refreshed.operatorOneRoom ?? "";
+      }
+
+      let priceTwoRooms = note.priceTwoRooms;
+      let operatorTwoRooms = note.operatorTwoRooms;
+      let priceHistoryTwoRooms = note.priceHistoryTwoRooms;
+      if (refreshed.priceTwoRooms != null) {
+        const next = String(refreshed.priceTwoRooms);
+        if (note.priceTwoRooms && note.priceTwoRooms !== next) {
+          priceHistoryTwoRooms = prependPriceHistory(
+            note.priceHistoryTwoRooms,
+            {
+              price: note.priceTwoRooms,
+              operator: note.operatorTwoRooms,
+              capturedAt: now,
+            },
+          );
+          flash.two = { from: note.priceTwoRooms, to: next };
+        }
+        priceTwoRooms = next;
+        operatorTwoRooms = refreshed.operatorTwoRooms ?? "";
+      }
+
+      let priceThreeRooms = note.priceThreeRooms;
+      let operatorThreeRooms = note.operatorThreeRooms;
+      let priceHistoryThreeRooms = note.priceHistoryThreeRooms;
+      if (refreshed.priceThreeRooms != null) {
+        const next = String(refreshed.priceThreeRooms);
+        if (note.priceThreeRooms && note.priceThreeRooms !== next) {
+          priceHistoryThreeRooms = prependPriceHistory(
+            note.priceHistoryThreeRooms,
+            {
+              price: note.priceThreeRooms,
+              operator: note.operatorThreeRooms,
+              capturedAt: now,
+            },
+          );
+          flash.three = { from: note.priceThreeRooms, to: next };
+        }
+        priceThreeRooms = next;
+        operatorThreeRooms = refreshed.operatorThreeRooms ?? "";
+      }
+
+      const anyPrice =
+        refreshed.priceOneRoom != null ||
+        refreshed.priceTwoRooms != null ||
+        refreshed.priceThreeRooms != null;
+      if (!anyPrice) {
+        setStatus(
+          `No matching tour prices found for “${note.name}” — existing prices kept.`,
+        );
+        return;
+      }
+
+      const updated: HotelNote = {
+        ...note,
+        priceOneRoom,
+        priceTwoRooms,
+        priceThreeRooms,
+        operatorOneRoom,
+        operatorTwoRooms,
+        operatorThreeRooms,
+        priceHistoryOneRoom,
+        priceHistoryTwoRooms,
+        priceHistoryThreeRooms,
+        updatedAt: now,
+      };
+      persist(upsertNote(notes, updated));
+      setPriceFlashById((m) => ({ ...m, [id]: flash }));
+      if (form.id === id) {
+        setForm((f) => ({
+          ...f,
+          priceOneRoom,
+          priceTwoRooms,
+          priceThreeRooms,
+          operatorOneRoom,
+          operatorTwoRooms,
+          operatorThreeRooms,
+          priceHistoryOneRoom,
+          priceHistoryTwoRooms,
+          priceHistoryThreeRooms,
+        }));
+        setOperatorLockKey((k) => k + 1);
+      }
+
+      setStatus(`Updated prices for “${note.name}”.`);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRefreshingId(null);
+    }
   }
 
   function handleExport() {
@@ -537,6 +753,41 @@ export default function App() {
               />
             </label>
 
+            {(form.priceHistoryOneRoom.length > 0 ||
+              form.priceHistoryTwoRooms.length > 0 ||
+              form.priceHistoryThreeRooms.length > 0) && (
+              <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <p className="font-medium text-slate-700">Price history</p>
+                {form.priceHistoryOneRoom.length > 0 ? (
+                  <p className="mt-1">
+                    1 room:{" "}
+                    {[...form.priceHistoryOneRoom]
+                      .reverse()
+                      .map((h) => formatPriceWithOperator(h.price, h.operator))
+                      .join(" → ")}
+                  </p>
+                ) : null}
+                {form.priceHistoryTwoRooms.length > 0 ? (
+                  <p className="mt-1">
+                    2 rooms:{" "}
+                    {[...form.priceHistoryTwoRooms]
+                      .reverse()
+                      .map((h) => formatPriceWithOperator(h.price, h.operator))
+                      .join(" → ")}
+                  </p>
+                ) : null}
+                {form.priceHistoryThreeRooms.length > 0 ? (
+                  <p className="mt-1">
+                    3 rooms:{" "}
+                    {[...form.priceHistoryThreeRooms]
+                      .reverse()
+                      .map((h) => formatPriceWithOperator(h.price, h.operator))
+                      .join(" → ")}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
             <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
               Your notes
               <textarea
@@ -715,25 +966,67 @@ export default function App() {
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
                         {[
-                          n.priceOneRoom
-                            ? `1 room: ${formatPriceWithOperator(n.priceOneRoom, n.operatorOneRoom)}`
-                            : null,
-                          n.priceTwoRooms
-                            ? `2 rooms: ${formatPriceWithOperator(n.priceTwoRooms, n.operatorTwoRooms)}`
-                            : null,
-                          n.priceThreeRooms
-                            ? `3 rooms: ${formatPriceWithOperator(n.priceThreeRooms, n.operatorThreeRooms)}`
-                            : null,
+                          formatPriceSlot(
+                            "1 room",
+                            n.priceOneRoom,
+                            n.operatorOneRoom,
+                            priceFlashById[n.id]?.one,
+                          ),
+                          formatPriceSlot(
+                            "2 rooms",
+                            n.priceTwoRooms,
+                            n.operatorTwoRooms,
+                            priceFlashById[n.id]?.two,
+                          ),
+                          formatPriceSlot(
+                            "3 rooms",
+                            n.priceThreeRooms,
+                            n.operatorThreeRooms,
+                            priceFlashById[n.id]?.three,
+                          ),
                         ]
                           .filter(Boolean)
-                          .join(" · ")}
+                          .reduce<ReactNode[]>((acc, node, i) => {
+                            if (!node) return acc;
+                            if (acc.length) {
+                              acc.push(
+                                <span key={`sep-${i}`}> · </span>,
+                              );
+                            }
+                            acc.push(node);
+                            return acc;
+                          }, [])}
                       </div>
+                      {(() => {
+                        const was = formatHistoryWasLine(n);
+                        return was ? (
+                          <p className="mt-0.5 text-xs text-slate-500">{was}</p>
+                        ) : null;
+                      })()}
                       {n.notes ? (
                         <p className="mt-1 text-sm text-slate-700">{n.notes}</p>
                       ) : null}
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col gap-1">
+                      <button
+                        type="button"
+                        className="text-xs text-slate-600 hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                        disabled={
+                          !n.tourRequestUrl.trim() || refreshingId === n.id
+                        }
+                        title={
+                          n.tourRequestUrl.trim()
+                            ? "Refresh tour prices"
+                            : "Load a curl and save once before refreshing"
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleRefreshPrices(n.id);
+                        }}
+                      >
+                        {refreshingId === n.id ? "Refreshing…" : "Refresh"}
+                      </button>
                       <button
                         type="button"
                         className="text-xs text-slate-600 hover:underline"

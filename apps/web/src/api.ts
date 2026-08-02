@@ -19,7 +19,17 @@ export type ParsedHotel = {
   operatorTwoRooms: string | null;
   /** Operator name for the winning 3-room offer (aaData[18]). */
   operatorThreeRooms: string | null;
+  requestUrl?: string;
   refererUrl?: string;
+};
+
+export type RefreshedPrices = {
+  priceOneRoom: number | null;
+  priceTwoRooms: number | null;
+  priceThreeRooms: number | null;
+  operatorOneRoom: string | null;
+  operatorTwoRooms: string | null;
+  operatorThreeRooms: string | null;
 };
 
 export async function parseTourCurl(curl: string): Promise<ParsedHotel> {
@@ -30,5 +40,19 @@ export async function parseTourCurl(curl: string): Promise<ParsedHotel> {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Parse failed");
+  return data;
+}
+
+export async function refreshHotelPrices(
+  requestUrl: string,
+  refererUrl: string,
+): Promise<RefreshedPrices> {
+  const res = await fetch(`${API_BASE}/api/refresh-hotel-prices`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestUrl, refererUrl }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Refresh failed");
   return data;
 }

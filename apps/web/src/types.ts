@@ -1,3 +1,9 @@
+export type PriceHistoryEntry = {
+  price: string;
+  operator: string;
+  capturedAt: string; // ISO
+};
+
 export type HotelNote = {
   id: string;
   hotelId: number | null;
@@ -15,6 +21,14 @@ export type HotelNote = {
   operatorTwoRooms: string;
   /** Tour operator for the 3-room price offer (auto-filled or manual). */
   operatorThreeRooms: string;
+  /** Last GetTours URL from curl parse — used by per-hotel price refresh. */
+  tourRequestUrl: string;
+  /** Referer from that curl (operator/meal filters + hotel page). */
+  tourRefererUrl: string;
+  /** Prior 1-room prices (newest first), capped at 10. */
+  priceHistoryOneRoom: PriceHistoryEntry[];
+  priceHistoryTwoRooms: PriceHistoryEntry[];
+  priceHistoryThreeRooms: PriceHistoryEntry[];
   notes: string;
   favorite: boolean;
   createdAt: string;
@@ -31,3 +45,13 @@ export type ParsedTourCurl = {
   longitude: number;
   refererUrl: string;
 };
+
+export const PRICE_HISTORY_CAP = 10;
+
+export function prependPriceHistory(
+  history: PriceHistoryEntry[],
+  entry: PriceHistoryEntry,
+  cap = PRICE_HISTORY_CAP,
+): PriceHistoryEntry[] {
+  return [entry, ...history].slice(0, cap);
+}

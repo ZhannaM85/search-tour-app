@@ -1,10 +1,24 @@
-import type { HotelNote } from "./types";
+import type { HotelNote, PriceHistoryEntry } from "./types";
 
 export type ShortlistBackup = {
   version: 1;
   exportedAt: string;
   hotels: HotelNote[];
 };
+
+function isPriceHistoryEntry(value: unknown): value is PriceHistoryEntry {
+  if (!value || typeof value !== "object") return false;
+  const e = value as Record<string, unknown>;
+  return (
+    typeof e.price === "string" &&
+    typeof e.capturedAt === "string" &&
+    (e.operator === undefined || typeof e.operator === "string")
+  );
+}
+
+function isHistoryArray(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.every(isPriceHistoryEntry));
+}
 
 function isHotelNote(value: unknown): value is HotelNote {
   if (!value || typeof value !== "object") return false;
@@ -28,8 +42,25 @@ function isHotelNote(value: unknown): value is HotelNote {
     (n.operatorTwoRooms === undefined ||
       typeof n.operatorTwoRooms === "string") &&
     (n.operatorThreeRooms === undefined ||
-      typeof n.operatorThreeRooms === "string")
+      typeof n.operatorThreeRooms === "string") &&
+    (n.tourRequestUrl === undefined || typeof n.tourRequestUrl === "string") &&
+    (n.tourRefererUrl === undefined || typeof n.tourRefererUrl === "string") &&
+    isHistoryArray(n.priceHistoryOneRoom) &&
+    isHistoryArray(n.priceHistoryTwoRooms) &&
+    isHistoryArray(n.priceHistoryThreeRooms)
   );
+}
+
+function normalizeHistory(value: unknown): PriceHistoryEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const e = item as PriceHistoryEntry;
+    return {
+      price: e.price,
+      operator: typeof e.operator === "string" ? e.operator : "",
+      capturedAt: e.capturedAt,
+    };
+  });
 }
 
 function withDefaults(notes: HotelNote[]): HotelNote[] {
@@ -45,6 +76,11 @@ function withDefaults(notes: HotelNote[]): HotelNote[] {
       typeof n.operatorTwoRooms === "string" ? n.operatorTwoRooms : "",
     operatorThreeRooms:
       typeof n.operatorThreeRooms === "string" ? n.operatorThreeRooms : "",
+    tourRequestUrl: typeof n.tourRequestUrl === "string" ? n.tourRequestUrl : "",
+    tourRefererUrl: typeof n.tourRefererUrl === "string" ? n.tourRefererUrl : "",
+    priceHistoryOneRoom: normalizeHistory(n.priceHistoryOneRoom),
+    priceHistoryTwoRooms: normalizeHistory(n.priceHistoryTwoRooms),
+    priceHistoryThreeRooms: normalizeHistory(n.priceHistoryThreeRooms),
   }));
 }
 

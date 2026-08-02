@@ -83,6 +83,51 @@ type PriceFlash = {
   three?: { from: string; to: string };
 };
 
+/** Fields compared for dirty Cancel-edit (#5). Ignores curl. */
+type EditBaseline = {
+  name: string;
+  pageUrl: string;
+  priceOneRoom: string;
+  priceTwoRooms: string;
+  priceThreeRooms: string;
+  operatorOneRoom: string;
+  operatorTwoRooms: string;
+  operatorThreeRooms: string;
+  notes: string;
+  favorite: boolean;
+};
+
+function snapshotEditBaseline(f: FormState): EditBaseline {
+  return {
+    name: f.name,
+    pageUrl: f.pageUrl,
+    priceOneRoom: f.priceOneRoom,
+    priceTwoRooms: f.priceTwoRooms,
+    priceThreeRooms: f.priceThreeRooms,
+    operatorOneRoom: f.operatorOneRoom,
+    operatorTwoRooms: f.operatorTwoRooms,
+    operatorThreeRooms: f.operatorThreeRooms,
+    notes: f.notes,
+    favorite: f.favorite,
+  };
+}
+
+function isEditDirty(form: FormState, baseline: EditBaseline | null): boolean {
+  if (!form.id || !baseline) return false;
+  return (
+    form.name !== baseline.name ||
+    form.pageUrl !== baseline.pageUrl ||
+    form.priceOneRoom !== baseline.priceOneRoom ||
+    form.priceTwoRooms !== baseline.priceTwoRooms ||
+    form.priceThreeRooms !== baseline.priceThreeRooms ||
+    form.operatorOneRoom !== baseline.operatorOneRoom ||
+    form.operatorTwoRooms !== baseline.operatorTwoRooms ||
+    form.operatorThreeRooms !== baseline.operatorThreeRooms ||
+    form.notes !== baseline.notes ||
+    form.favorite !== baseline.favorite
+  );
+}
+
 function formatPriceWithOperator(price: string, operator: string): string {
   const formatted = formatPrice(price);
   const op = operator.trim();
@@ -160,12 +205,29 @@ export default function App() {
     id: string;
     name: string;
   } | null>(null);
+  const [cancelEditConfirm, setCancelEditConfirm] = useState(false);
+  const [editBaseline, setEditBaseline] = useState<EditBaseline | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(() => {
     const list = favoritesOnly ? notes.filter((n) => n.favorite) : notes;
     return sortHotels(list, sortMode);
   }, [notes, favoritesOnly, sortMode]);
+
+  /** Map popup reads saved notes; while editing, overlay form quality so rating matches the form. */
+  const mapNotes = useMemo(() => {
+    if (!form.id) return sorted;
+    return sorted.map((n) =>
+      n.id === form.id
+        ? {
+            ...n,
+            stars: form.stars,
+            rating: form.rating,
+            reviewCount: form.reviewCount,
+          }
+        : n,
+    );
+  }, [sorted, form.id, form.stars, form.rating, form.reviewCount]);
 
   const favoriteCount = useMemo(
     () => notes.filter((n) => n.favorite).length,
@@ -207,7 +269,8 @@ export default function App() {
         latitude: parsed.latitude,
         longitude: parsed.longitude,
       });
-      setForm((f) => ({
+      const f = form;
+      const next: FormState = {
         ...f,
         // Already shortlisted → edit that entry (keep notes/favorite).
         id: duplicate?.id ?? null,
@@ -254,7 +317,10 @@ export default function App() {
         reviewCount: parsed.reviewCount ?? duplicate?.reviewCount ?? null,
         notes: duplicate?.notes ?? f.notes,
         favorite: duplicate?.favorite ?? f.favorite,
-      }));
+      };
+      setForm(next);
+      setEditBaseline(duplicate ? snapshotEditBaseline(next) : null);
+      setCancelEditConfirm(false);
       setOperatorLockKey((k) => k + 1);
       if (duplicate) {
         selectHotel(duplicate.id);
@@ -379,6 +445,8 @@ export default function App() {
     persist(next);
     selectHotel(id);
     setForm(emptyForm());
+    setEditBaseline(null);
+    setCancelEditConfirm(false);
     setOperatorLockKey((k) => k + 1);
     setStatus(
       existing || duplicate
@@ -390,7 +458,7 @@ export default function App() {
   function handleEdit(note: HotelNote) {
     const photoUrl =
       note.photoUrl || photoUrlFromHotelId(note.hotelId, note.pageUrl);
-    setForm({
+    const next: FormState = {
       id: note.id,
       curl: "",
       name: note.name,
@@ -415,10 +483,29 @@ export default function App() {
       priceHistoryThreeRooms: note.priceHistoryThreeRooms,
       notes: note.notes,
       favorite: note.favorite,
-    });
+    };
+    setForm(next);
+    setEditBaseline(snapshotEditBaseline(next));
+    setCancelEditConfirm(false);
     setOperatorLockKey((k) => k + 1);
     selectHotel(note.id);
     setStatus(`Editing “${note.name}”.`);
+  }
+
+  function clearEditForm(statusMessage = "Form cleared.") {
+    setForm(emptyForm());
+    setEditBaseline(null);
+    setCancelEditConfirm(false);
+    setOperatorLockKey((k) => k + 1);
+    setStatus(statusMessage);
+  }
+
+  function handleCancelEdit() {
+    if (isEditDirty(form, editBaseline)) {
+      setCancelEditConfirm(true);
+      return;
+    }
+    clearEditForm();
   }
 
   function handleDelete(id: string) {
@@ -433,8 +520,8 @@ export default function App() {
     setDeleteConfirm(null);
     persist(removeNote(notes, id));
     if (form.id === id) {
-      setForm(emptyForm());
-      setOperatorLockKey((k) => k + 1);
+      clearEditForm(`Removed “${name}”.`);
+      return;
     }
     setStatus(`Removed “${name}”.`);
   }
@@ -629,6 +716,8 @@ export default function App() {
       }
       persist(imported);
       setForm(emptyForm());
+      setEditBaseline(null);
+      setCancelEditConfirm(false);
       setOperatorLockKey((k) => k + 1);
       setFocusId(null);
       setStatus(`Imported ${imported.length} hotel(s) from backup.`);
@@ -882,11 +971,7 @@ export default function App() {
             {form.id ? (
               <button
                 type="button"
-                onClick={() => {
-                  setForm(emptyForm());
-                  setOperatorLockKey((k) => k + 1);
-                  setStatus("Form cleared.");
-                }}
+                onClick={handleCancelEdit}
                 className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm"
               >
                 Cancel edit
@@ -1150,7 +1235,7 @@ export default function App() {
 
       <section className="h-[min(70vh,560px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-full lg:min-h-0">
         <HotelsMap
-          notes={sorted}
+          notes={mapNotes}
           focusId={focusId}
           focusNonce={focusNonce}
         />
@@ -1168,6 +1253,16 @@ export default function App() {
         danger
         onConfirm={confirmDelete}
         onCancel={() => setDeleteConfirm(null)}
+      />
+
+      <ConfirmDialog
+        open={cancelEditConfirm}
+        title="Discard changes?"
+        message="You have unsaved edits. Discard them and leave edit mode?"
+        confirmLabel="Discard"
+        danger
+        onConfirm={() => clearEditForm()}
+        onCancel={() => setCancelEditConfirm(false)}
       />
     </div>
   );

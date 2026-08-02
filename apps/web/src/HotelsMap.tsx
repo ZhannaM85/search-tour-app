@@ -5,6 +5,7 @@ import type { HotelNote } from "./types";
 import { formatHotelQuality } from "./types";
 import { formatPrice } from "./formatPrice";
 import StarIcon from "./StarIcon";
+import ThumbsDownIcon from "./ThumbsDownIcon";
 import {
   ratingPriorFromHotels,
   weightedRating,
@@ -53,12 +54,14 @@ function HotelMarker({
   focused,
   focusNonce,
   onToggleFavorite,
+  onToggleDisliked,
   weighted,
 }: {
   note: HotelNote;
   focused: boolean;
   focusNonce: number;
   onToggleFavorite?: (id: string) => void;
+  onToggleDisliked?: (id: string) => void;
   weighted?: number | null;
 }) {
   const markerRef = useRef<L.Marker | null>(null);
@@ -125,6 +128,36 @@ function HotelMarker({
             ) : note.favorite ? (
               <StarIcon filled className="h-4 w-4 text-amber-400" />
             ) : null}
+            {onToggleDisliked ? (
+              <button
+                type="button"
+                className={`shrink-0 rounded p-0.5 ${
+                  note.disliked
+                    ? "text-slate-600 hover:text-slate-700"
+                    : "text-slate-300 hover:text-slate-500"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleDisliked(note.id);
+                }}
+                aria-label={
+                  note.disliked
+                    ? `Undo dislike for ${note.name}`
+                    : `Dislike ${note.name} — sort to bottom`
+                }
+                aria-pressed={note.disliked}
+                title={
+                  note.disliked
+                    ? "Undo dislike"
+                    : "Dislike (sort to bottom)"
+                }
+              >
+                <ThumbsDownIcon filled={note.disliked} className="h-4 w-4" />
+              </button>
+            ) : note.disliked ? (
+              <ThumbsDownIcon filled className="h-4 w-4 text-slate-500" />
+            ) : null}
             <span>{note.name}</span>
           </div>
           {(() => {
@@ -170,11 +203,13 @@ export default function HotelsMap({
   focusId,
   focusNonce = 0,
   onToggleFavorite,
+  onToggleDisliked,
 }: {
   notes: HotelNote[];
   focusId?: string | null;
   focusNonce?: number;
   onToggleFavorite?: (id: string) => void;
+  onToggleDisliked?: (id: string) => void;
 }) {
   const center: [number, number] =
     notes.length > 0
@@ -202,6 +237,7 @@ export default function HotelsMap({
           focused={n.id === focusId}
           focusNonce={focusNonce}
           onToggleFavorite={onToggleFavorite}
+          onToggleDisliked={onToggleDisliked}
           weighted={weightedRating(n.rating, n.reviewCount, ratingPrior)}
         />
       ))}

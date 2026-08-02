@@ -37,6 +37,8 @@ export type HotelNote = {
   reviewCount: number | null;
   notes: string;
   favorite: boolean;
+  /** Demoted: stays on the shortlist but sorts after everything else. */
+  disliked: boolean;
   createdAt: string;
   updatedAt: string;
 };

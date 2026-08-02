@@ -7,6 +7,7 @@ import RefreshIcon from "./RefreshIcon";
 import ExternalLinkIcon from "./ExternalLinkIcon";
 import StarIcon from "./StarIcon";
 import TrashIcon from "./TrashIcon";
+import ThumbsDownIcon from "./ThumbsDownIcon";
 import { parseTourCurl, refreshHotelPrices } from "./api";
 import { downloadBackup, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
@@ -63,6 +64,7 @@ type FormState = {
   reviewCount: number | null;
   notes: string;
   favorite: boolean;
+  disliked: boolean;
 };
 
 const emptyForm = (): FormState => ({
@@ -90,6 +92,7 @@ const emptyForm = (): FormState => ({
   reviewCount: null,
   notes: "",
   favorite: false,
+  disliked: false,
 });
 
 type PriceFlash = {
@@ -110,6 +113,7 @@ type EditBaseline = {
   operatorThreeRooms: string;
   notes: string;
   favorite: boolean;
+  disliked: boolean;
 };
 
 function snapshotEditBaseline(f: FormState): EditBaseline {
@@ -124,6 +128,7 @@ function snapshotEditBaseline(f: FormState): EditBaseline {
     operatorThreeRooms: f.operatorThreeRooms,
     notes: f.notes,
     favorite: f.favorite,
+    disliked: f.disliked,
   };
 }
 
@@ -139,7 +144,8 @@ function isEditDirty(form: FormState, baseline: EditBaseline | null): boolean {
     form.operatorTwoRooms !== baseline.operatorTwoRooms ||
     form.operatorThreeRooms !== baseline.operatorThreeRooms ||
     form.notes !== baseline.notes ||
-    form.favorite !== baseline.favorite
+    form.favorite !== baseline.favorite ||
+    form.disliked !== baseline.disliked
   );
 }
 
@@ -456,6 +462,7 @@ export default function App() {
         reviewCount: parsed.reviewCount ?? duplicate?.reviewCount ?? null,
         notes: duplicate?.notes ?? f.notes,
         favorite: duplicate?.favorite ?? f.favorite,
+        disliked: duplicate?.disliked ?? f.disliked,
       };
       setForm(next);
       setEditBaseline(duplicate ? snapshotEditBaseline(next) : null);
@@ -605,6 +612,7 @@ export default function App() {
       reviewCount: form.reviewCount ?? existing?.reviewCount ?? null,
       notes: form.notes.trim(),
       favorite: form.favorite,
+      disliked: form.disliked,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -651,6 +659,7 @@ export default function App() {
       priceHistoryThreeRooms: note.priceHistoryThreeRooms,
       notes: note.notes,
       favorite: note.favorite,
+      disliked: note.disliked,
     };
     setForm(next);
     setEditBaseline(snapshotEditBaseline(next));
@@ -697,19 +706,50 @@ export default function App() {
   function handleToggleFavorite(id: string) {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
+    const nextFavorite = !note.favorite;
     const next = upsertNote(notes, {
       ...note,
-      favorite: !note.favorite,
+      favorite: nextFavorite,
+      disliked: nextFavorite ? false : note.disliked,
       updatedAt: new Date().toISOString(),
     });
     persist(next);
     if (form.id === id) {
-      setForm((f) => ({ ...f, favorite: !note.favorite }));
+      setForm((f) => ({
+        ...f,
+        favorite: nextFavorite,
+        disliked: nextFavorite ? false : f.disliked,
+      }));
     }
     setStatus(
-      !note.favorite
+      nextFavorite
         ? `Marked “${note.name}” as favorite.`
         : `Removed “${note.name}” from favorites.`,
+    );
+  }
+
+  function handleToggleDisliked(id: string) {
+    const note = notes.find((n) => n.id === id);
+    if (!note) return;
+    const nextDisliked = !note.disliked;
+    const next = upsertNote(notes, {
+      ...note,
+      disliked: nextDisliked,
+      favorite: nextDisliked ? false : note.favorite,
+      updatedAt: new Date().toISOString(),
+    });
+    persist(next);
+    if (form.id === id) {
+      setForm((f) => ({
+        ...f,
+        disliked: nextDisliked,
+        favorite: nextDisliked ? false : f.favorite,
+      }));
+    }
+    setStatus(
+      nextDisliked
+        ? `Moved “${note.name}” to the bottom of the list.`
+        : `Restored “${note.name}” to normal ranking.`,
     );
   }
 
@@ -1115,20 +1155,60 @@ export default function App() {
               />
             </label>
 
-            <button
-              type="button"
-              onClick={() => setField("favorite", !form.favorite)}
-              className={`inline-flex w-fit items-center justify-center rounded-xl border p-2 sm:col-span-2 ${
-                form.favorite
-                  ? "border-amber-300 bg-amber-50 text-amber-400"
-                  : "border-slate-300 bg-white text-slate-300 hover:text-amber-400"
-              }`}
-              aria-pressed={form.favorite}
-              aria-label={form.favorite ? "Remove from favorites" : "Add to favorites"}
-              title={form.favorite ? "Remove from favorites" : "Add to favorites"}
-            >
-              <StarIcon filled={form.favorite} className="h-6 w-6" />
-            </button>
+            <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    favorite: !f.favorite,
+                    disliked: !f.favorite ? false : f.disliked,
+                  }))
+                }
+                className={`inline-flex w-fit items-center justify-center rounded-xl border p-2 ${
+                  form.favorite
+                    ? "border-amber-300 bg-amber-50 text-amber-400"
+                    : "border-slate-300 bg-white text-slate-300 hover:text-amber-400"
+                }`}
+                aria-pressed={form.favorite}
+                aria-label={
+                  form.favorite ? "Remove from favorites" : "Add to favorites"
+                }
+                title={
+                  form.favorite ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <StarIcon filled={form.favorite} className="h-6 w-6" />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    disliked: !f.disliked,
+                    favorite: !f.disliked ? false : f.favorite,
+                  }))
+                }
+                className={`inline-flex w-fit items-center justify-center rounded-xl border p-2 ${
+                  form.disliked
+                    ? "border-slate-400 bg-slate-100 text-slate-600"
+                    : "border-slate-300 bg-white text-slate-300 hover:text-slate-500"
+                }`}
+                aria-pressed={form.disliked}
+                aria-label={
+                  form.disliked
+                    ? "Undo dislike — restore normal ranking"
+                    : "Dislike — keep on list but sort to the bottom"
+                }
+                title={
+                  form.disliked
+                    ? "Undo dislike"
+                    : "Dislike (sort to bottom, keep on list)"
+                }
+              >
+                <ThumbsDownIcon filled={form.disliked} className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -1431,7 +1511,9 @@ export default function App() {
                       ? "border-teal-500 bg-teal-50 ring-1 ring-teal-400"
                       : n.favorite
                         ? "border-amber-300 bg-amber-50/60"
-                        : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                        : n.disliked
+                          ? "border-slate-200 bg-slate-100/80 opacity-70"
+                          : "border-slate-200 bg-slate-50 hover:border-slate-300"
                   }`}
                   onClick={() => toggleFocusHotel(n.id)}
                 >
@@ -1467,6 +1549,34 @@ export default function App() {
                           aria-pressed={n.favorite}
                         >
                           <StarIcon filled={n.favorite} className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          className={`shrink-0 rounded p-0.5 ${
+                            n.disliked
+                              ? "text-slate-600 hover:text-slate-700"
+                              : "text-slate-300 hover:text-slate-500"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleDisliked(n.id);
+                          }}
+                          aria-label={
+                            n.disliked
+                              ? `Undo dislike for ${n.name}`
+                              : `Dislike ${n.name} — sort to bottom`
+                          }
+                          aria-pressed={n.disliked}
+                          title={
+                            n.disliked
+                              ? "Undo dislike"
+                              : "Dislike (sort to bottom)"
+                          }
+                        >
+                          <ThumbsDownIcon
+                            filled={n.disliked}
+                            className="h-5 w-5"
+                          />
                         </button>
                         <span className="font-semibold text-teal-800">
                           {n.name}
@@ -1607,6 +1717,7 @@ export default function App() {
           focusId={focusId}
           focusNonce={focusNonce}
           onToggleFavorite={handleToggleFavorite}
+          onToggleDisliked={handleToggleDisliked}
         />
       </section>
 

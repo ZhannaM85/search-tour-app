@@ -36,6 +36,7 @@ function isHotelNote(value: unknown): value is HotelNote {
     typeof n.updatedAt === "string" &&
     (n.hotelId === null || typeof n.hotelId === "number") &&
     (n.favorite === undefined || typeof n.favorite === "boolean") &&
+    (n.disliked === undefined || typeof n.disliked === "boolean") &&
     (n.photoUrl === undefined || typeof n.photoUrl === "string") &&
     (n.priceThreeRooms === undefined || typeof n.priceThreeRooms === "string") &&
     (n.operatorOneRoom === undefined || typeof n.operatorOneRoom === "string") &&
@@ -76,6 +77,7 @@ function withDefaults(notes: HotelNote[]): HotelNote[] {
   return notes.map((n) => ({
     ...n,
     favorite: Boolean(n.favorite),
+    disliked: Boolean(n.disliked),
     photoUrl: typeof n.photoUrl === "string" ? n.photoUrl : "",
     priceThreeRooms:
       typeof n.priceThreeRooms === "string" ? n.priceThreeRooms : "",

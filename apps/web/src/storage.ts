@@ -88,6 +88,7 @@ function normalizeNote(value: unknown): HotelNote | null {
     reviewCount: normalizeOptionalNumber(n.reviewCount, true),
     notes: typeof n.notes === "string" ? n.notes : "",
     favorite: Boolean(n.favorite),
+    disliked: Boolean(n.disliked),
     createdAt: typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),
     updatedAt: typeof n.updatedAt === "string" ? n.updatedAt : new Date().toISOString(),
   };

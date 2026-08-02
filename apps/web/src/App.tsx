@@ -1829,7 +1829,7 @@ export default function App() {
                           target="_blank"
                           rel="noreferrer"
                           title="Open hotel page"
-                          aria-label={`Open ${n.name} on sletat`}
+                          aria-label={`Open ${n.name} hotel page`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <ExternalLinkIcon className="h-4 w-4" />

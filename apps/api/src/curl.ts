@@ -15,7 +15,7 @@ const IDX = {
   /** System room-type id — joins to hotel page `rooms[].id`. */
   ROOM_TYPE_ID: 44,
   /**
-   * Full tour price incl. operator fees — matches the amount shown on sletat.ru.
+   * Full tour price incl. operator fees — matches the amount shown on the hotel site.
    * Prefer this over PRICE when > 0 (promo rows differ: 42 < 88). When 0, the
    * site typically does not show that offer's net price as the button amount.
    */

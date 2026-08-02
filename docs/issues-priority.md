@@ -19,7 +19,16 @@ _Use the same curl response the app already fetches; stop asking for prices by h
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
 | [#2](https://github.com/ZhannaM85/search-tour-app/issues/2) | 🔧 In progress | Auto-fill tour prices (esp. 2 rooms) from curl response | Join hotel SSR `rooms[].roomCount` via GetTours `[44]` → price `[42]`. Fills 1 / 2 / 3 room cheapest prices. |
-| [#4](https://github.com/ZhannaM85/search-tour-app/issues/4) | ⬜ Open | Store tour operator with each captured price | **With / after #2.** Persist + show operator for the offer behind 1-room / 2-room price; refresh (#3) should update it too |
+| [#4](https://github.com/ZhannaM85/search-tour-app/issues/4) | ✅ Done | Store tour operator with each captured price | Per-price operators from aaData[18] with cheapest offer; form + list + map; persist/export |
 | [#3](https://github.com/ZhannaM85/search-tour-app/issues/3) | ⬜ Open | Per-hotel price refresh icon (no bulk refresh) | **After #2.** Icon on each hotel row only; refresh that hotel’s prices. No bulk/all refresh |
+
+---
+
+## Tier 3 — Edit UX safety
+_Prevent accidental loss of in-progress edits._
+
+| # | Status | Issue | Notes |
+|---|--------|-------|-------|
+| [#5](https://github.com/ZhannaM85/search-tour-app/issues/5) | ⬜ Open | Confirm before Cancel edit discards unsaved changes | Modal (or confirm) when Cancel edit would drop dirty form fields |
 
 ---

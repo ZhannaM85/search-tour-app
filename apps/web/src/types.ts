@@ -82,3 +82,26 @@ export function prependPriceHistory(
 ): PriceHistoryEntry[] {
   return [entry, ...history].slice(0, cap);
 }
+
+/**
+ * When a price changes, prepend the previous value to history.
+ * No-op if either side is empty, values match, or history already
+ * starts with that previous price (avoids double-recording).
+ */
+export function historyAfterPriceChange(
+  history: PriceHistoryEntry[],
+  previousPrice: string,
+  previousOperator: string,
+  nextPrice: string,
+  capturedAt: string,
+): PriceHistoryEntry[] {
+  const prev = previousPrice.trim();
+  const next = nextPrice.trim();
+  if (!prev || !next || prev === next) return history;
+  if (history[0]?.price === prev) return history;
+  return prependPriceHistory(history, {
+    price: prev,
+    operator: previousOperator,
+    capturedAt,
+  });
+}

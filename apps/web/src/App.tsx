@@ -21,7 +21,7 @@ import {
   upsertNote,
 } from "./storage";
 import type { HotelNote, PriceHistoryEntry } from "./types";
-import { formatHotelQuality, prependPriceHistory } from "./types";
+import { formatHotelQuality, historyAfterPriceChange } from "./types";
 
 type FormState = {
   id: string | null;
@@ -197,6 +197,7 @@ export default function App() {
   const [focusNonce, setFocusNonce] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("recent");
+  const [nameQuery, setNameQuery] = useState("");
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [priceFlashById, setPriceFlashById] = useState<
     Record<string, PriceFlash>
@@ -210,9 +211,16 @@ export default function App() {
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(() => {
-    const list = favoritesOnly ? notes.filter((n) => n.favorite) : notes;
+    const q = nameQuery.trim().toLowerCase();
+    let list = favoritesOnly ? notes.filter((n) => n.favorite) : notes;
+    if (q) {
+      list = list.filter((n) => n.name.toLowerCase().includes(q));
+    }
     return sortHotels(list, sortMode);
-  }, [notes, favoritesOnly, sortMode]);
+  }, [notes, favoritesOnly, sortMode, nameQuery]);
+
+  const listFiltered =
+    favoritesOnly || nameQuery.trim().length > 0;
 
   /** Map popup reads saved notes; while editing, overlay form quality so rating matches the form. */
   const mapNotes = useMemo(() => {
@@ -270,6 +278,57 @@ export default function App() {
         longitude: parsed.longitude,
       });
       const f = form;
+      const now = new Date().toISOString();
+      let priceHistoryOneRoom =
+        duplicate?.priceHistoryOneRoom ?? f.priceHistoryOneRoom;
+      let priceHistoryTwoRooms =
+        duplicate?.priceHistoryTwoRooms ?? f.priceHistoryTwoRooms;
+      let priceHistoryThreeRooms =
+        duplicate?.priceHistoryThreeRooms ?? f.priceHistoryThreeRooms;
+
+      const nextOne =
+        parsed.priceOneRoom != null
+          ? String(parsed.priceOneRoom)
+          : (duplicate?.priceOneRoom ?? f.priceOneRoom);
+      const nextTwo =
+        parsed.priceTwoRooms != null
+          ? String(parsed.priceTwoRooms)
+          : (duplicate?.priceTwoRooms ?? f.priceTwoRooms);
+      const nextThree =
+        parsed.priceThreeRooms != null
+          ? String(parsed.priceThreeRooms)
+          : (duplicate?.priceThreeRooms ?? f.priceThreeRooms);
+
+      if (duplicate) {
+        if (parsed.priceOneRoom != null) {
+          priceHistoryOneRoom = historyAfterPriceChange(
+            priceHistoryOneRoom,
+            duplicate.priceOneRoom,
+            duplicate.operatorOneRoom,
+            nextOne,
+            now,
+          );
+        }
+        if (parsed.priceTwoRooms != null) {
+          priceHistoryTwoRooms = historyAfterPriceChange(
+            priceHistoryTwoRooms,
+            duplicate.priceTwoRooms,
+            duplicate.operatorTwoRooms,
+            nextTwo,
+            now,
+          );
+        }
+        if (parsed.priceThreeRooms != null) {
+          priceHistoryThreeRooms = historyAfterPriceChange(
+            priceHistoryThreeRooms,
+            duplicate.priceThreeRooms,
+            duplicate.operatorThreeRooms,
+            nextThree,
+            now,
+          );
+        }
+      }
+
       const next: FormState = {
         ...f,
         // Already shortlisted → edit that entry (keep notes/favorite).
@@ -280,18 +339,9 @@ export default function App() {
         hotelId: parsed.hotelId != null ? String(parsed.hotelId) : "",
         latitude: String(parsed.latitude),
         longitude: String(parsed.longitude),
-        priceOneRoom:
-          parsed.priceOneRoom != null
-            ? String(parsed.priceOneRoom)
-            : (duplicate?.priceOneRoom ?? f.priceOneRoom),
-        priceTwoRooms:
-          parsed.priceTwoRooms != null
-            ? String(parsed.priceTwoRooms)
-            : (duplicate?.priceTwoRooms ?? f.priceTwoRooms),
-        priceThreeRooms:
-          parsed.priceThreeRooms != null
-            ? String(parsed.priceThreeRooms)
-            : (duplicate?.priceThreeRooms ?? f.priceThreeRooms),
+        priceOneRoom: nextOne,
+        priceTwoRooms: nextTwo,
+        priceThreeRooms: nextThree,
         operatorOneRoom:
           parsed.priceOneRoom != null
             ? (parsed.operatorOneRoom ?? "")
@@ -306,12 +356,9 @@ export default function App() {
             : (duplicate?.operatorThreeRooms ?? f.operatorThreeRooms),
         tourRequestUrl: parsed.requestUrl ?? f.tourRequestUrl,
         tourRefererUrl: parsed.refererUrl ?? f.tourRefererUrl,
-        priceHistoryOneRoom:
-          duplicate?.priceHistoryOneRoom ?? f.priceHistoryOneRoom,
-        priceHistoryTwoRooms:
-          duplicate?.priceHistoryTwoRooms ?? f.priceHistoryTwoRooms,
-        priceHistoryThreeRooms:
-          duplicate?.priceHistoryThreeRooms ?? f.priceHistoryThreeRooms,
+        priceHistoryOneRoom,
+        priceHistoryTwoRooms,
+        priceHistoryThreeRooms,
         stars: parsed.stars ?? duplicate?.stars ?? null,
         rating: parsed.rating ?? duplicate?.rating ?? null,
         reviewCount: parsed.reviewCount ?? duplicate?.reviewCount ?? null,
@@ -402,6 +449,44 @@ export default function App() {
       existing?.photoUrl ||
       photoUrlFromHotelId(hotelId, form.pageUrl.trim()) ||
       "";
+
+    let priceHistoryOneRoom =
+      form.priceHistoryOneRoom.length > 0
+        ? form.priceHistoryOneRoom
+        : (existing?.priceHistoryOneRoom ?? []);
+    let priceHistoryTwoRooms =
+      form.priceHistoryTwoRooms.length > 0
+        ? form.priceHistoryTwoRooms
+        : (existing?.priceHistoryTwoRooms ?? []);
+    let priceHistoryThreeRooms =
+      form.priceHistoryThreeRooms.length > 0
+        ? form.priceHistoryThreeRooms
+        : (existing?.priceHistoryThreeRooms ?? []);
+
+    if (existing) {
+      priceHistoryOneRoom = historyAfterPriceChange(
+        priceHistoryOneRoom,
+        existing.priceOneRoom,
+        existing.operatorOneRoom,
+        form.priceOneRoom.trim(),
+        now,
+      );
+      priceHistoryTwoRooms = historyAfterPriceChange(
+        priceHistoryTwoRooms,
+        existing.priceTwoRooms,
+        existing.operatorTwoRooms,
+        form.priceTwoRooms.trim(),
+        now,
+      );
+      priceHistoryThreeRooms = historyAfterPriceChange(
+        priceHistoryThreeRooms,
+        existing.priceThreeRooms,
+        existing.operatorThreeRooms,
+        form.priceThreeRooms.trim(),
+        now,
+      );
+    }
+
     const note: HotelNote = {
       id,
       hotelId,
@@ -420,18 +505,9 @@ export default function App() {
         form.tourRequestUrl.trim() || existing?.tourRequestUrl || "",
       tourRefererUrl:
         form.tourRefererUrl.trim() || existing?.tourRefererUrl || "",
-      priceHistoryOneRoom:
-        form.priceHistoryOneRoom.length > 0
-          ? form.priceHistoryOneRoom
-          : (existing?.priceHistoryOneRoom ?? []),
-      priceHistoryTwoRooms:
-        form.priceHistoryTwoRooms.length > 0
-          ? form.priceHistoryTwoRooms
-          : (existing?.priceHistoryTwoRooms ?? []),
-      priceHistoryThreeRooms:
-        form.priceHistoryThreeRooms.length > 0
-          ? form.priceHistoryThreeRooms
-          : (existing?.priceHistoryThreeRooms ?? []),
+      priceHistoryOneRoom,
+      priceHistoryTwoRooms,
+      priceHistoryThreeRooms,
       stars: form.stars ?? existing?.stars ?? null,
       rating: form.rating ?? existing?.rating ?? null,
       reviewCount: form.reviewCount ?? existing?.reviewCount ?? null,
@@ -571,11 +647,13 @@ export default function App() {
       if (refreshed.priceOneRoom != null) {
         const next = String(refreshed.priceOneRoom);
         if (note.priceOneRoom && note.priceOneRoom !== next) {
-          priceHistoryOneRoom = prependPriceHistory(note.priceHistoryOneRoom, {
-            price: note.priceOneRoom,
-            operator: note.operatorOneRoom,
-            capturedAt: now,
-          });
+          priceHistoryOneRoom = historyAfterPriceChange(
+            note.priceHistoryOneRoom,
+            note.priceOneRoom,
+            note.operatorOneRoom,
+            next,
+            now,
+          );
           flash.one = { from: note.priceOneRoom, to: next };
         }
         priceOneRoom = next;
@@ -588,13 +666,12 @@ export default function App() {
       if (refreshed.priceTwoRooms != null) {
         const next = String(refreshed.priceTwoRooms);
         if (note.priceTwoRooms && note.priceTwoRooms !== next) {
-          priceHistoryTwoRooms = prependPriceHistory(
+          priceHistoryTwoRooms = historyAfterPriceChange(
             note.priceHistoryTwoRooms,
-            {
-              price: note.priceTwoRooms,
-              operator: note.operatorTwoRooms,
-              capturedAt: now,
-            },
+            note.priceTwoRooms,
+            note.operatorTwoRooms,
+            next,
+            now,
           );
           flash.two = { from: note.priceTwoRooms, to: next };
         }
@@ -608,13 +685,12 @@ export default function App() {
       if (refreshed.priceThreeRooms != null) {
         const next = String(refreshed.priceThreeRooms);
         if (note.priceThreeRooms && note.priceThreeRooms !== next) {
-          priceHistoryThreeRooms = prependPriceHistory(
+          priceHistoryThreeRooms = historyAfterPriceChange(
             note.priceHistoryThreeRooms,
-            {
-              price: note.priceThreeRooms,
-              operator: note.operatorThreeRooms,
-              capturedAt: now,
-            },
+            note.priceThreeRooms,
+            note.operatorThreeRooms,
+            next,
+            now,
           );
           flash.three = { from: note.priceThreeRooms, to: next };
         }
@@ -986,7 +1062,7 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-slate-900">
               Saved hotels ({sorted.length}
-              {favoritesOnly ? ` of ${notes.length}` : ""})
+              {listFiltered ? ` of ${notes.length}` : ""})
             </h2>
             <div className="flex flex-wrap gap-2">
               <label className="inline-flex items-center gap-1.5 text-sm text-slate-700">
@@ -1049,13 +1125,31 @@ export default function App() {
               />
             </div>
           </div>
+
+          {notes.length > 0 ? (
+            <label className="mt-3 block text-sm text-slate-700">
+              <span className="sr-only">Search by hotel name</span>
+              <input
+                type="search"
+                value={nameQuery}
+                onChange={(e) => setNameQuery(e.target.value)}
+                placeholder="Search by hotel name…"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+          ) : null}
+
           {notes.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">
               None yet. Export downloads a backup JSON; Import restores it.
             </p>
           ) : sorted.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">
-              No favorites yet. Tap the star on a hotel to mark one.
+              {nameQuery.trim()
+                ? `No hotels match “${nameQuery.trim()}”.`
+                : favoritesOnly
+                  ? "No favorites yet. Tap the star on a hotel to mark one."
+                  : "No hotels to show."}
             </p>
           ) : (
             <ul className="mt-3 space-y-3">

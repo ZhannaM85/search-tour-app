@@ -998,6 +998,7 @@ export default function App() {
                 >
                   <option value="recent">Sort: recent</option>
                   <option value="name">Sort: name</option>
+                  <option value="rating">Sort: rating</option>
                   <option value="one-asc">1 room: low → high</option>
                   <option value="one-desc">1 room: high → low</option>
                   <option value="two-asc">2 rooms: low → high</option>

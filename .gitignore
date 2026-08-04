@@ -10,3 +10,4 @@ build/
 coverage/
 *.tsbuildinfo
 .cursor/
+apps/web/public/price-baseline-*.json

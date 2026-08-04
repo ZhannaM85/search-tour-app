@@ -8,7 +8,7 @@ import ExternalLinkIcon from "./ExternalLinkIcon";
 import StarIcon from "./StarIcon";
 import TrashIcon from "./TrashIcon";
 import ThumbsDownIcon from "./ThumbsDownIcon";
-import { parseTourCurl, refreshHotelPrices } from "./api";
+import { parseTourCurl, refreshHotelPrices, type RefreshedPrices } from "./api";
 import { downloadBackup, parseBackupJson, readBackupFile } from "./backup";
 import { formatPrice, formatPriceInput, parsePriceDigits } from "./formatPrice";
 import { fillMissingPhotos, photoUrlFromHotelId } from "./photoUrl";
@@ -109,6 +109,10 @@ const emptyForm = (): FormState => ({
   disliked: false,
 });
 
+/** Pause between finishing one hotel refresh and starting the next (bulk). */
+const REFRESH_ALL_GAP_MS = 1250;
+
+/** Transient list hints after refresh (strikethrough old → new / unavailable). */
 type PriceFlashEntry =
   | { from: string; to: string }
   | { from: string; unavailable: true };
@@ -118,6 +122,210 @@ type PriceFlash = {
   two?: PriceFlashEntry;
   three?: PriceFlashEntry;
 };
+
+type ApplyRefreshResult = {
+  /** Null when refresh found nothing useful and left the note unchanged. */
+  updated: HotelNote | null;
+  flash: PriceFlash;
+  unavailableLabels: string[];
+  restoredLabels: string[];
+  anyPrice: boolean;
+};
+
+function applyRefreshedPricesToNote(
+  note: HotelNote,
+  refreshed: RefreshedPrices,
+  now: string,
+): ApplyRefreshResult {
+  const flash: PriceFlash = {};
+  const unavailableLabels: string[] = [];
+  const restoredLabels: string[] = [];
+
+  const anyPrice =
+    refreshed.priceOneRoom != null ||
+    refreshed.priceTwoRooms != null ||
+    refreshed.priceThreeRooms != null;
+  const stars = refreshed.stars ?? note.stars;
+  const rating = refreshed.rating ?? note.rating;
+  const reviewCount = refreshed.reviewCount ?? note.reviewCount;
+  const anyQuality =
+    refreshed.stars != null ||
+    refreshed.rating != null ||
+    refreshed.reviewCount != null;
+
+  /**
+   * Only treat a null slot as “no longer available” when at least one room
+   * price resolved. If every slot is null (empty catalog, strict filters, or
+   * failed join), keep prior prices instead of wiping the card to Was:-only.
+   */
+  const clearMissingSlots = anyPrice;
+
+  function applyRoomSlot(
+    label: string,
+    flashKey: keyof PriceFlash,
+    prevPrice: string,
+    prevOperator: string,
+    prevHistory: PriceHistoryEntry[],
+    nextPrice: number | null,
+    nextOperator: string | null,
+  ): {
+    price: string;
+    operator: string;
+    history: PriceHistoryEntry[];
+  } {
+    if (nextPrice != null) {
+      const next = String(nextPrice);
+      let history = prevHistory;
+      if (prevPrice && prevPrice !== next) {
+        history = historyAfterPriceChange(
+          prevHistory,
+          prevPrice,
+          prevOperator,
+          next,
+          now,
+        );
+        flash[flashKey] = { from: prevPrice, to: next };
+      }
+      return {
+        price: next,
+        operator: nextOperator ?? "",
+        history,
+      };
+    }
+
+    if (clearMissingSlots && prevPrice.trim()) {
+      unavailableLabels.push(label);
+      flash[flashKey] = { from: prevPrice, unavailable: true };
+      const history =
+        prevHistory[0]?.price === prevPrice.trim()
+          ? prevHistory
+          : prependPriceHistory(prevHistory, {
+              price: prevPrice.trim(),
+              operator: prevOperator,
+              capturedAt: now,
+            });
+      return { price: "", operator: "", history };
+    }
+
+    // No resolvable prices this refresh — keep what we have.
+    if (prevPrice.trim()) {
+      return {
+        price: prevPrice,
+        operator: prevOperator,
+        history: prevHistory,
+      };
+    }
+
+    // Heal an earlier wipe: current empty but Was:/history still has a value
+    // (Selectum-style). Re-show last known until a real offer returns.
+    const last = prevHistory[0];
+    if (last?.price.trim()) {
+      restoredLabels.push(label);
+      return {
+        price: last.price,
+        operator: last.operator,
+        history: prevHistory,
+      };
+    }
+
+    return {
+      price: prevPrice,
+      operator: prevOperator,
+      history: prevHistory,
+    };
+  }
+
+  const one = applyRoomSlot(
+    "1 room",
+    "one",
+    note.priceOneRoom,
+    note.operatorOneRoom,
+    note.priceHistoryOneRoom,
+    refreshed.priceOneRoom,
+    refreshed.operatorOneRoom,
+  );
+  const two = applyRoomSlot(
+    "2 rooms",
+    "two",
+    note.priceTwoRooms,
+    note.operatorTwoRooms,
+    note.priceHistoryTwoRooms,
+    refreshed.priceTwoRooms,
+    refreshed.operatorTwoRooms,
+  );
+  const three = applyRoomSlot(
+    "3 rooms",
+    "three",
+    note.priceThreeRooms,
+    note.operatorThreeRooms,
+    note.priceHistoryThreeRooms,
+    refreshed.priceThreeRooms,
+    refreshed.operatorThreeRooms,
+  );
+
+  const pricesUnchanged =
+    one.price === note.priceOneRoom &&
+    one.operator === note.operatorOneRoom &&
+    two.price === note.priceTwoRooms &&
+    two.operator === note.operatorTwoRooms &&
+    three.price === note.priceThreeRooms &&
+    three.operator === note.operatorThreeRooms &&
+    stars === note.stars &&
+    rating === note.rating &&
+    reviewCount === note.reviewCount;
+
+  if (
+    !anyPrice &&
+    !anyQuality &&
+    unavailableLabels.length === 0 &&
+    restoredLabels.length === 0
+  ) {
+    return {
+      updated: null,
+      flash,
+      unavailableLabels,
+      restoredLabels,
+      anyPrice,
+    };
+  }
+
+  if (
+    pricesUnchanged &&
+    unavailableLabels.length === 0 &&
+    restoredLabels.length === 0
+  ) {
+    return {
+      updated: null,
+      flash,
+      unavailableLabels,
+      restoredLabels,
+      anyPrice,
+    };
+  }
+
+  return {
+    updated: {
+      ...note,
+      priceOneRoom: one.price,
+      priceTwoRooms: two.price,
+      priceThreeRooms: three.price,
+      operatorOneRoom: one.operator,
+      operatorTwoRooms: two.operator,
+      operatorThreeRooms: three.operator,
+      priceHistoryOneRoom: one.history,
+      priceHistoryTwoRooms: two.history,
+      priceHistoryThreeRooms: three.history,
+      stars,
+      rating,
+      reviewCount,
+      updatedAt: now,
+    },
+    flash,
+    unavailableLabels,
+    restoredLabels,
+    anyPrice,
+  };
+}
 
 /** Fields compared for dirty Cancel-edit (#5). Ignores curl. */
 type EditBaseline = {
@@ -173,15 +381,144 @@ function formatPriceWithOperator(price: string, operator: string): string {
   return op ? `${formatted} (${op})` : formatted;
 }
 
-function formatHistoryWasLine(note: HotelNote): string | null {
-  const bits: string[] = [];
-  const h1 = note.priceHistoryOneRoom[0];
-  const h2 = note.priceHistoryTwoRooms[0];
-  const h3 = note.priceHistoryThreeRooms[0];
-  if (h1) bits.push(`1 room ${formatPriceWithOperator(h1.price, h1.operator)}`);
-  if (h2) bits.push(`2 rooms ${formatPriceWithOperator(h2.price, h2.operator)}`);
-  if (h3) bits.push(`3 rooms ${formatPriceWithOperator(h3.price, h3.operator)}`);
-  return bits.length ? `Was: ${bits.join(" · ")}` : null;
+/** Match baseline hotel by id, then hotelId, then name+coords. */
+function findBaselineHotel(
+  note: HotelNote,
+  baseline: HotelNote[],
+): HotelNote | undefined {
+  const byId = baseline.find((b) => b.id === note.id);
+  if (byId) return byId;
+  if (note.hotelId != null) {
+    const byHotelId = baseline.find((b) => b.hotelId === note.hotelId);
+    if (byHotelId) return byHotelId;
+  }
+  return baseline.find(
+    (b) =>
+      b.name === note.name &&
+      b.latitude === note.latitude &&
+      b.longitude === note.longitude,
+  );
+}
+
+function slotFlash(
+  oldPrice: string,
+  oldOperator: string,
+  newPrice: string,
+): PriceFlashEntry | undefined {
+  const from = oldPrice.trim();
+  const to = newPrice.trim();
+  if (from && to && from !== to) return { from, to };
+  if (from && !to) return { from, unavailable: true };
+  void oldOperator;
+  return undefined;
+}
+
+/**
+ * Build strikethrough flashes: baseline (old) → current (new).
+ * Also folds old prices into history when missing.
+ */
+function applyBaselinePriceFlash(
+  notes: HotelNote[],
+  baseline: HotelNote[],
+  capturedAt: string,
+): { notes: HotelNote[]; flashById: Record<string, PriceFlash>; changed: number } {
+  const flashById: Record<string, PriceFlash> = {};
+  let changed = 0;
+  const nextNotes = notes.map((note) => {
+    const old = findBaselineHotel(note, baseline);
+    if (!old) return note;
+
+    const one = slotFlash(
+      old.priceOneRoom,
+      old.operatorOneRoom,
+      note.priceOneRoom,
+    );
+    const two = slotFlash(
+      old.priceTwoRooms,
+      old.operatorTwoRooms,
+      note.priceTwoRooms,
+    );
+    const three = slotFlash(
+      old.priceThreeRooms,
+      old.operatorThreeRooms,
+      note.priceThreeRooms,
+    );
+    if (!one && !two && !three) return note;
+
+    changed += 1;
+    flashById[note.id] = {
+      ...(one ? { one } : {}),
+      ...(two ? { two } : {}),
+      ...(three ? { three } : {}),
+    };
+
+    let priceHistoryOneRoom = note.priceHistoryOneRoom;
+    let priceHistoryTwoRooms = note.priceHistoryTwoRooms;
+    let priceHistoryThreeRooms = note.priceHistoryThreeRooms;
+    if (one && "to" in one) {
+      priceHistoryOneRoom = historyAfterPriceChange(
+        priceHistoryOneRoom,
+        one.from,
+        old.operatorOneRoom,
+        one.to,
+        capturedAt,
+      );
+    } else if (one && "unavailable" in one) {
+      priceHistoryOneRoom =
+        priceHistoryOneRoom[0]?.price === one.from
+          ? priceHistoryOneRoom
+          : prependPriceHistory(priceHistoryOneRoom, {
+              price: one.from,
+              operator: old.operatorOneRoom,
+              capturedAt,
+            });
+    }
+    if (two && "to" in two) {
+      priceHistoryTwoRooms = historyAfterPriceChange(
+        priceHistoryTwoRooms,
+        two.from,
+        old.operatorTwoRooms,
+        two.to,
+        capturedAt,
+      );
+    } else if (two && "unavailable" in two) {
+      priceHistoryTwoRooms =
+        priceHistoryTwoRooms[0]?.price === two.from
+          ? priceHistoryTwoRooms
+          : prependPriceHistory(priceHistoryTwoRooms, {
+              price: two.from,
+              operator: old.operatorTwoRooms,
+              capturedAt,
+            });
+    }
+    if (three && "to" in three) {
+      priceHistoryThreeRooms = historyAfterPriceChange(
+        priceHistoryThreeRooms,
+        three.from,
+        old.operatorThreeRooms,
+        three.to,
+        capturedAt,
+      );
+    } else if (three && "unavailable" in three) {
+      priceHistoryThreeRooms =
+        priceHistoryThreeRooms[0]?.price === three.from
+          ? priceHistoryThreeRooms
+          : prependPriceHistory(priceHistoryThreeRooms, {
+              price: three.from,
+              operator: old.operatorThreeRooms,
+              capturedAt,
+            });
+    }
+
+    return {
+      ...note,
+      priceHistoryOneRoom,
+      priceHistoryTwoRooms,
+      priceHistoryThreeRooms,
+    };
+  });
+
+  return { notes: nextNotes, flashById, changed };
 }
 
 function formatPriceSlot(
@@ -266,6 +603,7 @@ export default function App() {
     loadBestPricePercent,
   );
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [bulkRefreshing, setBulkRefreshing] = useState(false);
   const [priceFlashById, setPriceFlashById] = useState<
     Record<string, PriceFlash>
   >({});
@@ -275,7 +613,14 @@ export default function App() {
   } | null>(null);
   const [cancelEditConfirm, setCancelEditConfirm] = useState(false);
   const [editBaseline, setEditBaseline] = useState<EditBaseline | null>(null);
+  /** Inline note editor on a list card (hotel id). */
+  const [inlineNoteId, setInlineNoteId] = useState<string | null>(null);
+  const [inlineNoteDraft, setInlineNoteDraft] = useState("");
   const importInputRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef(notes);
+  const formIdRef = useRef(form.id);
+  formIdRef.current = form.id;
+  const bulkCancelRef = useRef(false);
 
   useEffect(() => {
     if (!isPublicViewer) return;
@@ -306,7 +651,9 @@ export default function App() {
         }
         if (cancelled) return;
         const prefs = loadViewerPrefs();
-        setNotes(applyViewerPrefs(hotels, prefs));
+        const next = applyViewerPrefs(hotels, prefs);
+        notesRef.current = next;
+        setNotes(next);
         setCatalogReady(true);
         if (hotels.length === 0) {
           setStatus(
@@ -327,7 +674,9 @@ export default function App() {
         const local = loadNotes();
         if (local.length > 0) {
           const prefs = loadViewerPrefs();
-          setNotes(applyViewerPrefs(local, prefs));
+          const next = applyViewerPrefs(local, prefs);
+          notesRef.current = next;
+          setNotes(next);
           setCatalogReady(true);
           setStatus(
             `Previewing ${local.length} hotel(s) from your full-app shortlist (could not load shortlist.json).`,
@@ -465,9 +814,56 @@ export default function App() {
   }
 
   function persist(next: HotelNote[]) {
+    notesRef.current = next;
     setNotes(next);
     saveNotes(next);
   }
+
+  /** One-shot: show ~~old~~ → new vs 2 Aug backup (local file in /public). */
+  useEffect(() => {
+    if (isPublicViewer) return;
+    const flagKey = "hotel-shortlist.baselineFlash.2026-08-02";
+    try {
+      if (sessionStorage.getItem(flagKey) === "1") return;
+    } catch {
+      /* ignore */
+    }
+    let cancelled = false;
+    const url = `${import.meta.env.BASE_URL}price-baseline-2026-08-02.json`;
+    (async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const baseline = parseBackupJson(await res.text());
+        if (cancelled || baseline.length === 0) return;
+        const { notes: merged, flashById, changed } = applyBaselinePriceFlash(
+          notesRef.current,
+          baseline,
+          "2026-08-02T15:40:23.331Z",
+        );
+        if (cancelled || changed === 0) {
+          return;
+        }
+        notesRef.current = merged;
+        setNotes(merged);
+        saveNotes(merged);
+        setPriceFlashById(flashById);
+        setStatus(
+          `Showing ${changed} hotel(s) with price changes vs 2 Aug backup (strikethrough = old).`,
+        );
+        try {
+          sessionStorage.setItem(flagKey, "1");
+        } catch {
+          /* ignore */
+        }
+      } catch {
+        /* baseline file optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -795,6 +1191,47 @@ export default function App() {
     clearEditForm();
   }
 
+  function startInlineNote(note: HotelNote) {
+    if (isPublicViewer) return;
+    setInlineNoteId(note.id);
+    setInlineNoteDraft(note.notes);
+  }
+
+  function cancelInlineNote() {
+    setInlineNoteId(null);
+    setInlineNoteDraft("");
+  }
+
+  function saveInlineNote(id: string) {
+    const note = notesRef.current.find((n) => n.id === id);
+    if (!note) {
+      cancelInlineNote();
+      return;
+    }
+    const nextNotes = inlineNoteDraft.trim();
+    if (note.notes === nextNotes) {
+      cancelInlineNote();
+      return;
+    }
+    const updated: HotelNote = {
+      ...note,
+      notes: nextNotes,
+      updatedAt: new Date().toISOString(),
+    };
+    const next = upsertNote(notesRef.current, updated);
+    persist(next);
+    if (formIdRef.current === id) {
+      setForm((f) => ({ ...f, notes: nextNotes }));
+      setEditBaseline((b) => (b ? { ...b, notes: nextNotes } : b));
+    }
+    cancelInlineNote();
+    setStatus(
+      nextNotes
+        ? `Updated note for “${note.name}”.`
+        : `Cleared note for “${note.name}”.`,
+    );
+  }
+
   function handleDelete(id: string) {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
@@ -805,7 +1242,7 @@ export default function App() {
     if (!deleteConfirm) return;
     const { id, name } = deleteConfirm;
     setDeleteConfirm(null);
-    persist(removeNote(notes, id));
+    persist(removeNote(notesRef.current, id));
     if (form.id === id) {
       clearEditForm(`Removed “${name}”.`);
       return;
@@ -814,14 +1251,18 @@ export default function App() {
   }
 
   function handleToggleFavorite(id: string) {
-    const note = notes.find((n) => n.id === id);
+    const note = notesRef.current.find((n) => n.id === id);
     if (!note) return;
     const nextFavorite = !note.favorite;
 
     if (isPublicViewer) {
       const prefs = setViewerFavorite(loadViewerPrefs(), id, nextFavorite);
       saveViewerPrefs(prefs);
-      setNotes((prev) => applyViewerPrefs(prev, prefs));
+      setNotes((prev) => {
+        const next = applyViewerPrefs(prev, prefs);
+        notesRef.current = next;
+        return next;
+      });
       setStatus(
         nextFavorite
           ? `Marked “${note.name}” as favorite (saved in this browser).`
@@ -830,7 +1271,7 @@ export default function App() {
       return;
     }
 
-    const next = upsertNote(notes, {
+    const next = upsertNote(notesRef.current, {
       ...note,
       favorite: nextFavorite,
       disliked: nextFavorite ? false : note.disliked,
@@ -852,14 +1293,18 @@ export default function App() {
   }
 
   function handleToggleDisliked(id: string) {
-    const note = notes.find((n) => n.id === id);
+    const note = notesRef.current.find((n) => n.id === id);
     if (!note) return;
     const nextDisliked = !note.disliked;
 
     if (isPublicViewer) {
       const prefs = setViewerDisliked(loadViewerPrefs(), id, nextDisliked);
       saveViewerPrefs(prefs);
-      setNotes((prev) => applyViewerPrefs(prev, prefs));
+      setNotes((prev) => {
+        const next = applyViewerPrefs(prev, prefs);
+        notesRef.current = next;
+        return next;
+      });
       setStatus(
         nextDisliked
           ? `Moved “${note.name}” to the bottom (saved in this browser).`
@@ -868,7 +1313,7 @@ export default function App() {
       return;
     }
 
-    const next = upsertNote(notes, {
+    const next = upsertNote(notesRef.current, {
       ...note,
       disliked: nextDisliked,
       favorite: nextDisliked ? false : note.favorite,
@@ -889,8 +1334,110 @@ export default function App() {
     );
   }
 
+  async function refreshOneHotel(
+    id: string,
+  ): Promise<{
+    name: string;
+    kind: "updated" | "kept" | "skipped" | "error";
+    unavailableLabels: string[];
+    restoredLabels: string[];
+    anyPrice: boolean;
+    error?: string;
+  }> {
+    const note = notesRef.current.find((n) => n.id === id);
+    if (!note) {
+      return {
+        name: id,
+        kind: "skipped",
+        unavailableLabels: [],
+        restoredLabels: [],
+        anyPrice: false,
+      };
+    }
+    if (!note.tourRequestUrl.trim()) {
+      return {
+        name: note.name,
+        kind: "skipped",
+        unavailableLabels: [],
+        restoredLabels: [],
+        anyPrice: false,
+      };
+    }
+
+    setRefreshingId(id);
+    try {
+      const refreshed = await refreshHotelPrices(
+        note.tourRequestUrl,
+        note.tourRefererUrl,
+      );
+      const result = applyRefreshedPricesToNote(
+        note,
+        refreshed,
+        new Date().toISOString(),
+      );
+      if (!result.updated) {
+        return {
+          name: note.name,
+          kind: "kept",
+          unavailableLabels: [],
+          restoredLabels: [],
+          anyPrice: false,
+        };
+      }
+
+      const next = upsertNote(notesRef.current, result.updated);
+      persist(next);
+
+      const anyFlash = Boolean(
+        result.flash.one || result.flash.two || result.flash.three,
+      );
+      if (anyFlash) {
+        setPriceFlashById((m) => ({ ...m, [id]: result.flash }));
+      }
+      if (formIdRef.current === id) {
+        const u = result.updated;
+        setForm((f) => ({
+          ...f,
+          priceOneRoom: u.priceOneRoom,
+          priceTwoRooms: u.priceTwoRooms,
+          priceThreeRooms: u.priceThreeRooms,
+          operatorOneRoom: u.operatorOneRoom,
+          operatorTwoRooms: u.operatorTwoRooms,
+          operatorThreeRooms: u.operatorThreeRooms,
+          priceHistoryOneRoom: u.priceHistoryOneRoom,
+          priceHistoryTwoRooms: u.priceHistoryTwoRooms,
+          priceHistoryThreeRooms: u.priceHistoryThreeRooms,
+          stars: u.stars,
+          rating: u.rating,
+          reviewCount: u.reviewCount,
+        }));
+        setOperatorLockKey((k) => k + 1);
+      }
+
+      return {
+        name: note.name,
+        kind: "updated",
+        unavailableLabels: result.unavailableLabels,
+        restoredLabels: result.restoredLabels,
+        anyPrice: result.anyPrice,
+      };
+    } catch (err) {
+      return {
+        name: note.name,
+        kind: "error",
+        unavailableLabels: [],
+        restoredLabels: [],
+        anyPrice: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    } finally {
+      setRefreshingId(null);
+    }
+  }
+
   async function handleRefreshPrices(id: string) {
-    const note = notes.find((n) => n.id === id);
+    if (bulkRefreshing || refreshingId) return;
+    const note = notesRef.current.find((n) => n.id === id);
     if (!note) return;
     if (!note.tourRequestUrl.trim()) {
       setStatus(
@@ -899,185 +1446,98 @@ export default function App() {
       return;
     }
 
-    setRefreshingId(id);
     setStatus(`Refreshing prices for “${note.name}”…`);
-    try {
-      const refreshed = await refreshHotelPrices(
-        note.tourRequestUrl,
-        note.tourRefererUrl,
-      );
-      const now = new Date().toISOString();
-      const flash: PriceFlash = {};
-      const unavailableLabels: string[] = [];
-
-      function applyRoomSlot(
-        label: string,
-        flashKey: keyof PriceFlash,
-        prevPrice: string,
-        prevOperator: string,
-        prevHistory: PriceHistoryEntry[],
-        nextPrice: number | null,
-        nextOperator: string | null,
-      ): {
-        price: string;
-        operator: string;
-        history: PriceHistoryEntry[];
-      } {
-        if (nextPrice != null) {
-          const next = String(nextPrice);
-          let history = prevHistory;
-          if (prevPrice && prevPrice !== next) {
-            history = historyAfterPriceChange(
-              prevHistory,
-              prevPrice,
-              prevOperator,
-              next,
-              now,
-            );
-            flash[flashKey] = { from: prevPrice, to: next };
-          }
-          return {
-            price: next,
-            operator: nextOperator ?? "",
-            history,
-          };
-        }
-
-        // Offer gone for this room count — clear stale price and warn.
-        if (prevPrice.trim()) {
-          unavailableLabels.push(label);
-          flash[flashKey] = { from: prevPrice, unavailable: true };
-          const history =
-            prevHistory[0]?.price === prevPrice.trim()
-              ? prevHistory
-              : prependPriceHistory(prevHistory, {
-                  price: prevPrice.trim(),
-                  operator: prevOperator,
-                  capturedAt: now,
-                });
-          return { price: "", operator: "", history };
-        }
-
-        return {
-          price: prevPrice,
-          operator: prevOperator,
-          history: prevHistory,
-        };
-      }
-
-      const one = applyRoomSlot(
-        "1 room",
-        "one",
-        note.priceOneRoom,
-        note.operatorOneRoom,
-        note.priceHistoryOneRoom,
-        refreshed.priceOneRoom,
-        refreshed.operatorOneRoom,
-      );
-      const two = applyRoomSlot(
-        "2 rooms",
-        "two",
-        note.priceTwoRooms,
-        note.operatorTwoRooms,
-        note.priceHistoryTwoRooms,
-        refreshed.priceTwoRooms,
-        refreshed.operatorTwoRooms,
-      );
-      const three = applyRoomSlot(
-        "3 rooms",
-        "three",
-        note.priceThreeRooms,
-        note.operatorThreeRooms,
-        note.priceHistoryThreeRooms,
-        refreshed.priceThreeRooms,
-        refreshed.operatorThreeRooms,
-      );
-
-      const priceOneRoom = one.price;
-      const operatorOneRoom = one.operator;
-      const priceHistoryOneRoom = one.history;
-      const priceTwoRooms = two.price;
-      const operatorTwoRooms = two.operator;
-      const priceHistoryTwoRooms = two.history;
-      const priceThreeRooms = three.price;
-      const operatorThreeRooms = three.operator;
-      const priceHistoryThreeRooms = three.history;
-
-      const anyPrice =
-        refreshed.priceOneRoom != null ||
-        refreshed.priceTwoRooms != null ||
-        refreshed.priceThreeRooms != null;
-      const stars = refreshed.stars ?? note.stars;
-      const rating = refreshed.rating ?? note.rating;
-      const reviewCount = refreshed.reviewCount ?? note.reviewCount;
-      const anyQuality =
-        refreshed.stars != null ||
-        refreshed.rating != null ||
-        refreshed.reviewCount != null;
-      const anyFlash = Boolean(flash.one || flash.two || flash.three);
-
-      if (!anyPrice && !anyQuality && unavailableLabels.length === 0) {
-        setStatus(
-          `No matching tour prices found for “${note.name}” — existing prices kept.`,
-        );
-        return;
-      }
-
-      const updated: HotelNote = {
-        ...note,
-        priceOneRoom,
-        priceTwoRooms,
-        priceThreeRooms,
-        operatorOneRoom,
-        operatorTwoRooms,
-        operatorThreeRooms,
-        priceHistoryOneRoom,
-        priceHistoryTwoRooms,
-        priceHistoryThreeRooms,
-        stars,
-        rating,
-        reviewCount,
-        updatedAt: now,
-      };
-      persist(upsertNote(notes, updated));
-      if (anyFlash) {
-        setPriceFlashById((m) => ({ ...m, [id]: flash }));
-      }
-      if (form.id === id) {
-        setForm((f) => ({
-          ...f,
-          priceOneRoom,
-          priceTwoRooms,
-          priceThreeRooms,
-          operatorOneRoom,
-          operatorTwoRooms,
-          operatorThreeRooms,
-          priceHistoryOneRoom,
-          priceHistoryTwoRooms,
-          priceHistoryThreeRooms,
-          stars,
-          rating,
-          reviewCount,
-        }));
-        setOperatorLockKey((k) => k + 1);
-      }
-
-      const unavailableMsg =
-        unavailableLabels.length > 0
-          ? ` Warning: ${unavailableLabels.join(", ")} no longer available.`
-          : "";
+    const outcome = await refreshOneHotel(id);
+    if (outcome.kind === "skipped") {
       setStatus(
-        anyPrice
-          ? `Updated prices for “${note.name}”.${unavailableMsg}`
-          : unavailableLabels.length > 0
-            ? `Cleared unavailable room prices for “${note.name}”.${unavailableMsg}`
-            : `Updated hotel rating for “${note.name}” — no matching tour prices.`,
+        `“${outcome.name}” has no saved tour search — load a curl and save once before refreshing.`,
       );
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : String(err));
+      return;
+    }
+    if (outcome.kind === "error") {
+      setStatus(outcome.error ?? "Refresh failed");
+      return;
+    }
+    if (outcome.kind === "kept") {
+      setStatus(
+        `No matching tour prices found for “${outcome.name}” — existing prices kept.`,
+      );
+      return;
+    }
+
+    const unavailableMsg =
+      outcome.unavailableLabels.length > 0
+        ? ` Warning: ${outcome.unavailableLabels.join(", ")} no longer available.`
+        : "";
+    const restoredMsg =
+      outcome.restoredLabels.length > 0
+        ? ` Restored last known ${outcome.restoredLabels.join(", ")} from history (no matching offer this search).`
+        : "";
+    setStatus(
+      outcome.anyPrice
+        ? `Updated prices for “${outcome.name}”.${unavailableMsg}`
+        : outcome.restoredLabels.length > 0
+          ? `No matching tour prices for “${outcome.name}”.${restoredMsg}`
+          : outcome.unavailableLabels.length > 0
+            ? `Cleared unavailable room prices for “${outcome.name}”.${unavailableMsg}`
+            : `Updated hotel rating for “${outcome.name}” — no matching tour prices.`,
+    );
+  }
+
+  async function handleRefreshAll() {
+    if (bulkRefreshing || refreshingId) return;
+    const targets = notesRef.current.filter((n) => n.tourRequestUrl.trim());
+    if (targets.length === 0) {
+      setStatus(
+        "No hotels have a saved tour search yet — load a curl and save once before refreshing.",
+      );
+      return;
+    }
+
+    bulkCancelRef.current = false;
+    setBulkRefreshing(true);
+    let updated = 0;
+    let kept = 0;
+    let failed = 0;
+    const skipped =
+      notesRef.current.length - targets.length;
+
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        if (bulkCancelRef.current) break;
+        const hotel = targets[i]!;
+        setStatus(
+          `Refreshing ${i + 1}/${targets.length}: “${hotel.name}”…`,
+        );
+        const outcome = await refreshOneHotel(hotel.id);
+        if (outcome.kind === "updated") updated += 1;
+        else if (outcome.kind === "kept") kept += 1;
+        else if (outcome.kind === "error") failed += 1;
+
+        const isLast = i === targets.length - 1;
+        if (!isLast && !bulkCancelRef.current) {
+          await new Promise((r) => setTimeout(r, REFRESH_ALL_GAP_MS));
+        }
+      }
+
+      const stopped = bulkCancelRef.current;
+      const parts = [
+        stopped ? "Refresh all stopped" : "Refresh all finished",
+        `${updated} updated`,
+      ];
+      if (kept) parts.push(`${kept} unchanged`);
+      if (failed) parts.push(`${failed} failed`);
+      if (skipped) parts.push(`${skipped} skipped (no saved search)`);
+      setStatus(`${parts[0]}: ${parts.slice(1).join(", ")}.`);
     } finally {
+      setBulkRefreshing(false);
       setRefreshingId(null);
     }
+  }
+
+  function handleStopRefreshAll() {
+    bulkCancelRef.current = true;
+    setStatus("Stopping refresh all after the current hotel…");
   }
 
   function handleExport() {
@@ -1577,17 +2037,38 @@ export default function App() {
               </button>
               {!isPublicViewer ? (
                 <>
+              {bulkRefreshing ? (
+                <button
+                  type="button"
+                  onClick={handleStopRefreshAll}
+                  className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100"
+                >
+                  Stop refresh
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleRefreshAll()}
+                  disabled={Boolean(refreshingId) || notes.length === 0}
+                  title="Refresh tour prices for every hotel with a saved search, one at a time (~1.25s apart)"
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Refresh all
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleExport}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+                disabled={bulkRefreshing}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Export
               </button>
               <button
                 type="button"
                 onClick={() => importInputRef.current?.click()}
-                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50"
+                disabled={bulkRefreshing}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Import
               </button>
@@ -1602,6 +2083,11 @@ export default function App() {
               ) : null}
             </div>
           </div>
+          {bulkRefreshing || (status && status.startsWith("Refresh all")) ? (
+            <p className="mt-2 text-sm text-slate-600" aria-live="polite">
+              {status}
+            </p>
+          ) : null}
 
           {notes.length > 0 ? (
             <div className="mt-3 space-y-2">
@@ -1793,7 +2279,14 @@ export default function App() {
                             className="h-5 w-5"
                           />
                         </button>
-                        <span className="font-semibold text-teal-800">
+                        <span
+                          className="cursor-pointer font-semibold text-teal-800 hover:underline"
+                          title="Edit hotel details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isPublicViewer) handleEdit(n);
+                          }}
+                        >
                           {n.name}
                         </span>
                       </div>
@@ -1841,13 +2334,39 @@ export default function App() {
                             return acc;
                           }, [])}
                       </div>
-                      {(() => {
-                        const was = formatHistoryWasLine(n);
-                        return was ? (
-                          <p className="mt-0.5 text-xs text-slate-500">{was}</p>
-                        ) : null;
-                      })()}
-                      {n.notes ? (
+                      {!isPublicViewer && inlineNoteId === n.id ? (
+                        <div
+                          className="mt-1"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          <textarea
+                            autoFocus
+                            rows={2}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800"
+                            value={inlineNoteDraft}
+                            placeholder="Add note…"
+                            aria-label={`Note for ${n.name}`}
+                            onChange={(e) =>
+                              setInlineNoteDraft(e.target.value)
+                            }
+                            onBlur={() => saveInlineNote(n.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Escape") {
+                                e.preventDefault();
+                                cancelInlineNote();
+                              }
+                              if (
+                                e.key === "Enter" &&
+                                (e.metaKey || e.ctrlKey)
+                              ) {
+                                e.preventDefault();
+                                (e.target as HTMLTextAreaElement).blur();
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : n.notes ? (
                         <p className="mt-1 text-sm text-slate-700">{n.notes}</p>
                       ) : null}
                       </div>
@@ -1859,12 +2378,16 @@ export default function App() {
                         type="button"
                         className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                         disabled={
-                          !n.tourRequestUrl.trim() || refreshingId === n.id
+                          !n.tourRequestUrl.trim() ||
+                          refreshingId === n.id ||
+                          bulkRefreshing
                         }
                         title={
-                          n.tourRequestUrl.trim()
-                            ? "Refresh tour prices"
-                            : "Load a curl and save once before refreshing"
+                          bulkRefreshing
+                            ? "Refresh all in progress"
+                            : n.tourRequestUrl.trim()
+                              ? "Refresh tour prices"
+                              : "Load a curl and save once before refreshing"
                         }
                         aria-label={
                           refreshingId === n.id
@@ -1885,11 +2408,15 @@ export default function App() {
                       <button
                         type="button"
                         className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                        title="Edit"
-                        aria-label={`Edit ${n.name}`}
+                        title={n.notes ? "Edit note" : "Add note"}
+                        aria-label={
+                          n.notes
+                            ? `Edit note for ${n.name}`
+                            : `Add note for ${n.name}`
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEdit(n);
+                          startInlineNote(n);
                         }}
                       >
                         <PencilIcon className="h-4 w-4" />

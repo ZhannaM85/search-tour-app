@@ -52,6 +52,6 @@ _Make per-hotel price refresh trustworthy when offers change or disappear._
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
 | [#11](https://github.com/ZhannaM85/search-tour-app/issues/11) | ✅ Done | Refresh icon does not update hotel prices | Fresh GetTours via `requestId=0`, then poll; validated live (price flash) |
-| [#12](https://github.com/ZhannaM85/search-tour-app/issues/12) | ⬜ Open | Clear stale room prices when refresh finds no offer | e.g. no 2-room offer anymore → clear price/operator + warn; apply to 1/2/3 |
+| [#12](https://github.com/ZhannaM85/search-tour-app/issues/12) | ✅ Done | Clear stale room prices when refresh finds no offer | Clear price/operator + flash “no longer available”; validated on device (Galeri 2 rooms) |
 
 ---

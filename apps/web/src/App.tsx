@@ -33,7 +33,11 @@ import {
   upsertNote,
 } from "./storage";
 import type { HotelNote, PriceHistoryEntry } from "./types";
-import { formatHotelQuality, historyAfterPriceChange } from "./types";
+import {
+  formatHotelQuality,
+  historyAfterPriceChange,
+  prependPriceHistory,
+} from "./types";
 import {
   applyViewerPrefs,
   loadViewerPrefs,
@@ -105,10 +109,14 @@ const emptyForm = (): FormState => ({
   disliked: false,
 });
 
+type PriceFlashEntry =
+  | { from: string; to: string }
+  | { from: string; unavailable: true };
+
 type PriceFlash = {
-  one?: { from: string; to: string };
-  two?: { from: string; to: string };
-  three?: { from: string; to: string };
+  one?: PriceFlashEntry;
+  two?: PriceFlashEntry;
+  three?: PriceFlashEntry;
 };
 
 /** Fields compared for dirty Cancel-edit (#5). Ignores curl. */
@@ -180,10 +188,22 @@ function formatPriceSlot(
   label: string,
   price: string,
   operator: string,
-  flash?: { from: string; to: string },
+  flash?: PriceFlashEntry,
 ): ReactNode {
   if (!price && !flash) return null;
-  if (flash) {
+  if (flash && "unavailable" in flash) {
+    return (
+      <span key={label} className="text-amber-800">
+        {label}:{" "}
+        <span className="text-slate-400 line-through">
+          {formatPrice(flash.from)}
+        </span>
+        {" → "}
+        <span className="font-medium">no longer available</span>
+      </span>
+    );
+  }
+  if (flash && "to" in flash) {
     return (
       <span key={label}>
         {label}:{" "}
@@ -888,63 +908,100 @@ export default function App() {
       );
       const now = new Date().toISOString();
       const flash: PriceFlash = {};
+      const unavailableLabels: string[] = [];
 
-      let priceOneRoom = note.priceOneRoom;
-      let operatorOneRoom = note.operatorOneRoom;
-      let priceHistoryOneRoom = note.priceHistoryOneRoom;
-      if (refreshed.priceOneRoom != null) {
-        const next = String(refreshed.priceOneRoom);
-        if (note.priceOneRoom && note.priceOneRoom !== next) {
-          priceHistoryOneRoom = historyAfterPriceChange(
-            note.priceHistoryOneRoom,
-            note.priceOneRoom,
-            note.operatorOneRoom,
-            next,
-            now,
-          );
-          flash.one = { from: note.priceOneRoom, to: next };
+      function applyRoomSlot(
+        label: string,
+        flashKey: keyof PriceFlash,
+        prevPrice: string,
+        prevOperator: string,
+        prevHistory: PriceHistoryEntry[],
+        nextPrice: number | null,
+        nextOperator: string | null,
+      ): {
+        price: string;
+        operator: string;
+        history: PriceHistoryEntry[];
+      } {
+        if (nextPrice != null) {
+          const next = String(nextPrice);
+          let history = prevHistory;
+          if (prevPrice && prevPrice !== next) {
+            history = historyAfterPriceChange(
+              prevHistory,
+              prevPrice,
+              prevOperator,
+              next,
+              now,
+            );
+            flash[flashKey] = { from: prevPrice, to: next };
+          }
+          return {
+            price: next,
+            operator: nextOperator ?? "",
+            history,
+          };
         }
-        priceOneRoom = next;
-        operatorOneRoom = refreshed.operatorOneRoom ?? "";
+
+        // Offer gone for this room count — clear stale price and warn.
+        if (prevPrice.trim()) {
+          unavailableLabels.push(label);
+          flash[flashKey] = { from: prevPrice, unavailable: true };
+          const history =
+            prevHistory[0]?.price === prevPrice.trim()
+              ? prevHistory
+              : prependPriceHistory(prevHistory, {
+                  price: prevPrice.trim(),
+                  operator: prevOperator,
+                  capturedAt: now,
+                });
+          return { price: "", operator: "", history };
+        }
+
+        return {
+          price: prevPrice,
+          operator: prevOperator,
+          history: prevHistory,
+        };
       }
 
-      let priceTwoRooms = note.priceTwoRooms;
-      let operatorTwoRooms = note.operatorTwoRooms;
-      let priceHistoryTwoRooms = note.priceHistoryTwoRooms;
-      if (refreshed.priceTwoRooms != null) {
-        const next = String(refreshed.priceTwoRooms);
-        if (note.priceTwoRooms && note.priceTwoRooms !== next) {
-          priceHistoryTwoRooms = historyAfterPriceChange(
-            note.priceHistoryTwoRooms,
-            note.priceTwoRooms,
-            note.operatorTwoRooms,
-            next,
-            now,
-          );
-          flash.two = { from: note.priceTwoRooms, to: next };
-        }
-        priceTwoRooms = next;
-        operatorTwoRooms = refreshed.operatorTwoRooms ?? "";
-      }
+      const one = applyRoomSlot(
+        "1 room",
+        "one",
+        note.priceOneRoom,
+        note.operatorOneRoom,
+        note.priceHistoryOneRoom,
+        refreshed.priceOneRoom,
+        refreshed.operatorOneRoom,
+      );
+      const two = applyRoomSlot(
+        "2 rooms",
+        "two",
+        note.priceTwoRooms,
+        note.operatorTwoRooms,
+        note.priceHistoryTwoRooms,
+        refreshed.priceTwoRooms,
+        refreshed.operatorTwoRooms,
+      );
+      const three = applyRoomSlot(
+        "3 rooms",
+        "three",
+        note.priceThreeRooms,
+        note.operatorThreeRooms,
+        note.priceHistoryThreeRooms,
+        refreshed.priceThreeRooms,
+        refreshed.operatorThreeRooms,
+      );
 
-      let priceThreeRooms = note.priceThreeRooms;
-      let operatorThreeRooms = note.operatorThreeRooms;
-      let priceHistoryThreeRooms = note.priceHistoryThreeRooms;
-      if (refreshed.priceThreeRooms != null) {
-        const next = String(refreshed.priceThreeRooms);
-        if (note.priceThreeRooms && note.priceThreeRooms !== next) {
-          priceHistoryThreeRooms = historyAfterPriceChange(
-            note.priceHistoryThreeRooms,
-            note.priceThreeRooms,
-            note.operatorThreeRooms,
-            next,
-            now,
-          );
-          flash.three = { from: note.priceThreeRooms, to: next };
-        }
-        priceThreeRooms = next;
-        operatorThreeRooms = refreshed.operatorThreeRooms ?? "";
-      }
+      const priceOneRoom = one.price;
+      const operatorOneRoom = one.operator;
+      const priceHistoryOneRoom = one.history;
+      const priceTwoRooms = two.price;
+      const operatorTwoRooms = two.operator;
+      const priceHistoryTwoRooms = two.history;
+      const priceThreeRooms = three.price;
+      const operatorThreeRooms = three.operator;
+      const priceHistoryThreeRooms = three.history;
 
       const anyPrice =
         refreshed.priceOneRoom != null ||
@@ -957,8 +1014,9 @@ export default function App() {
         refreshed.stars != null ||
         refreshed.rating != null ||
         refreshed.reviewCount != null;
+      const anyFlash = Boolean(flash.one || flash.two || flash.three);
 
-      if (!anyPrice && !anyQuality) {
+      if (!anyPrice && !anyQuality && unavailableLabels.length === 0) {
         setStatus(
           `No matching tour prices found for “${note.name}” — existing prices kept.`,
         );
@@ -982,7 +1040,7 @@ export default function App() {
         updatedAt: now,
       };
       persist(upsertNote(notes, updated));
-      if (anyPrice) {
+      if (anyFlash) {
         setPriceFlashById((m) => ({ ...m, [id]: flash }));
       }
       if (form.id === id) {
@@ -1004,10 +1062,16 @@ export default function App() {
         setOperatorLockKey((k) => k + 1);
       }
 
+      const unavailableMsg =
+        unavailableLabels.length > 0
+          ? ` Warning: ${unavailableLabels.join(", ")} no longer available.`
+          : "";
       setStatus(
         anyPrice
-          ? `Updated prices for “${note.name}”.`
-          : `Updated hotel rating for “${note.name}” — no matching tour prices.`,
+          ? `Updated prices for “${note.name}”.${unavailableMsg}`
+          : unavailableLabels.length > 0
+            ? `Cleared unavailable room prices for “${note.name}”.${unavailableMsg}`
+            : `Updated hotel rating for “${note.name}” — no matching tour prices.`,
       );
     } catch (err) {
       setStatus(err instanceof Error ? err.message : String(err));

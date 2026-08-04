@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-02T15:40:23.331Z",
+  "exportedAt": "2026-08-04T07:26:25.816Z",
   "hotels": [
     {
       "id": "6ff57e51-6370-4978-a51d-4d9a343762b2",
@@ -10,14 +10,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/43705_0_1280_720_1.jpg",
       "latitude": 36.83416,
       "longitude": 31.15061,
-      "priceOneRoom": "332162",
-      "priceTwoRooms": "361772",
+      "priceOneRoom": "334954",
+      "priceTwoRooms": "369394",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "332162",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:51:48.571Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "361772",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:51:48.571Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.06,
@@ -26,7 +38,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:00:47.234Z",
-      "updatedAt": "2026-08-02T10:28:57.710Z",
+      "updatedAt": "2026-08-04T07:05:41.426Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -38,14 +50,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/14926_0_1280_720_1.jpg",
       "latitude": 36.6616173,
       "longitude": 31.6561089,
-      "priceOneRoom": "273712",
-      "priceTwoRooms": "317135",
+      "priceOneRoom": "276012",
+      "priceTwoRooms": "",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
-      "operatorTwoRooms": "Biblio Globus",
+      "operatorTwoRooms": "",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "273712",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:52:11.334Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "317135",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:02:28.750Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.12,
@@ -54,7 +78,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:06:18.576Z",
-      "updatedAt": "2026-08-02T10:48:37.834Z",
+      "updatedAt": "2026-08-04T07:05:44.847Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -66,23 +90,35 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/92752_0_1280_720_1.jpg",
       "latitude": 36.60682,
       "longitude": 31.78281,
-      "priceOneRoom": "295277",
-      "priceTwoRooms": "338407",
+      "priceOneRoom": "298742",
+      "priceTwoRooms": "341350",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "295277",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:03:45.749Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "338407",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:03:45.749Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.58,
       "reviewCount": 388,
-      "notes": "",
+      "notes": "Находится в городе, поэтому поставили дислайк.",
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:09:34.491Z",
-      "updatedAt": "2026-08-02T12:01:29.765Z",
+      "updatedAt": "2026-08-04T07:05:49.526Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -94,14 +130,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/32368_0_1280_720_1.jpg",
       "latitude": 36.50549,
       "longitude": 30.53567,
-      "priceOneRoom": "324283",
-      "priceTwoRooms": "453842",
+      "priceOneRoom": "331313",
+      "priceTwoRooms": "466908",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "324283",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:58:51.815Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "453842",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:58:51.815Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.16,
@@ -110,7 +158,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:13:16.219Z",
-      "updatedAt": "2026-08-02T10:22:11.705Z",
+      "updatedAt": "2026-08-04T07:05:53.941Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -122,15 +170,33 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/13929_0_1280_720_1.jpg",
       "latitude": 36.55133,
       "longitude": 30.56294,
-      "priceOneRoom": "333316",
-      "priceTwoRooms": "352934",
-      "priceThreeRooms": "656616",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "priceOneRoom": "352764",
+      "priceTwoRooms": "373723",
+      "priceThreeRooms": "662134",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "Biblio Globus",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "333316",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:55:47.620Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "352934",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:55:47.620Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "656616",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:55:47.620Z"
+        }
+      ],
       "stars": 5,
       "rating": 9.02,
       "reviewCount": 280,
@@ -138,7 +204,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:16:34.982Z",
-      "updatedAt": "2026-08-02T10:27:40.401Z",
+      "updatedAt": "2026-08-04T07:06:04.301Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -150,14 +216,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/7023_0_1280_720_1.jpg",
       "latitude": 36.75125,
       "longitude": 31.4533024,
-      "priceOneRoom": "341140",
-      "priceTwoRooms": "354020",
+      "priceOneRoom": "344006",
+      "priceTwoRooms": "356995",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "341140",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:52:01.057Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "354020",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:52:01.057Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.14,
@@ -166,7 +244,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:18:36.981Z",
-      "updatedAt": "2026-08-02T10:26:16.291Z",
+      "updatedAt": "2026-08-04T07:06:10.287Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -178,15 +256,33 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/43158_0_1280_720_1.jpg",
       "latitude": 36.8200264,
       "longitude": 31.2907238,
-      "priceOneRoom": "343610",
-      "priceTwoRooms": "405476",
-      "priceThreeRooms": "417324",
+      "priceOneRoom": "352975",
+      "priceTwoRooms": "415363",
+      "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
-      "operatorThreeRooms": "Anex",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "operatorThreeRooms": "",
+      "priceHistoryOneRoom": [
+        {
+          "price": "343610",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:06:15.373Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "405476",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:06:15.373Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "417324",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:06:15.373Z"
+        }
+      ],
       "stars": 5,
       "rating": 9.1,
       "reviewCount": 276,
@@ -194,7 +290,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:20:01.219Z",
-      "updatedAt": "2026-08-02T10:31:08.963Z",
+      "updatedAt": "2026-08-04T07:06:15.373Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -206,14 +302,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/9168_0_1280_720_1.jpg",
       "latitude": 36.49476,
       "longitude": 30.52563,
-      "priceOneRoom": "347678",
-      "priceTwoRooms": "476971",
+      "priceOneRoom": "350599",
+      "priceTwoRooms": "480979",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "347678",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:02:43.603Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "476971",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:02:43.603Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.26,
@@ -222,7 +330,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:22:17.436Z",
-      "updatedAt": "2026-08-02T10:47:37.787Z",
+      "updatedAt": "2026-08-04T07:06:19.420Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -234,14 +342,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/9182_0_1280_720_1.jpg",
       "latitude": 36.84941,
       "longitude": 30.8063,
-      "priceOneRoom": "352264",
-      "priceTwoRooms": "397512",
+      "priceOneRoom": "355224",
+      "priceTwoRooms": "401078",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "352264",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:06:23.800Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "397512",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:06:23.800Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.08,
@@ -250,7 +370,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:24:28.948Z",
-      "updatedAt": "2026-08-02T10:29:44.568Z",
+      "updatedAt": "2026-08-04T07:06:23.800Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -262,14 +382,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/100683_0_1280_720_1.jpg",
       "latitude": 36.59824,
       "longitude": 31.80969,
-      "priceOneRoom": "356265",
-      "priceTwoRooms": "394516",
+      "priceOneRoom": "359258",
+      "priceTwoRooms": "397831",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "356265",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:51:17.889Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "394516",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:51:17.889Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.16,
@@ -278,7 +410,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:26:32.626Z",
-      "updatedAt": "2026-08-02T10:30:35.330Z",
+      "updatedAt": "2026-08-04T07:06:31.643Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -290,13 +422,18 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/72111_0_1280_720_1.jpg",
       "latitude": 36.84263,
       "longitude": 31.10116,
-      "priceOneRoom": "361675",
-      "priceTwoRooms": "388577",
+      "priceOneRoom": "",
+      "priceTwoRooms": "",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "",
+      "operatorTwoRooms": "",
       "operatorThreeRooms": "",
       "priceHistoryOneRoom": [
+        {
+          "price": "361675",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:58:20.654Z"
+        },
         {
           "price": "336025",
           "operator": "Intourist",
@@ -314,6 +451,11 @@
         }
       ],
       "priceHistoryTwoRooms": [
+        {
+          "price": "388577",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:58:20.654Z"
+        },
         {
           "price": "360703",
           "operator": "Intourist",
@@ -338,7 +480,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:31:18.181Z",
-      "updatedAt": "2026-08-02T12:08:19.774Z",
+      "updatedAt": "2026-08-04T07:06:35.223Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -350,14 +492,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/3516_0_1280_720_1.jpg",
       "latitude": 36.75711,
       "longitude": 31.42179,
-      "priceOneRoom": "367696",
-      "priceTwoRooms": "474722",
+      "priceOneRoom": "401065",
+      "priceTwoRooms": "",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "367696",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:06:38.778Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "474722",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:06:38.778Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.08,
@@ -366,7 +520,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:37:42.472Z",
-      "updatedAt": "2026-08-02T10:32:18.505Z",
+      "updatedAt": "2026-08-04T07:06:38.778Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -378,15 +532,33 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/24745_0_1280_720_1.jpg",
       "latitude": 36.59931,
       "longitude": 31.80606,
-      "priceOneRoom": "383489",
-      "priceTwoRooms": "434914",
-      "priceThreeRooms": "686768",
-      "operatorOneRoom": "Biblio Globus",
-      "operatorTwoRooms": "Biblio Globus",
-      "operatorThreeRooms": "Biblio Globus",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "priceOneRoom": "",
+      "priceTwoRooms": "",
+      "priceThreeRooms": "",
+      "operatorOneRoom": "",
+      "operatorTwoRooms": "",
+      "operatorThreeRooms": "",
+      "priceHistoryOneRoom": [
+        {
+          "price": "383489",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:02:50.243Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "434914",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:02:50.243Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "686768",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:02:50.243Z"
+        }
+      ],
       "stars": 5,
       "rating": 9.14,
       "reviewCount": 490,
@@ -394,7 +566,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:39:17.277Z",
-      "updatedAt": "2026-08-02T10:35:14.956Z",
+      "updatedAt": "2026-08-04T07:06:45.285Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -406,15 +578,33 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/29960_0_1280_720_1.jpg",
       "latitude": 36.60899,
       "longitude": 30.55899,
-      "priceOneRoom": "336651",
-      "priceTwoRooms": "388383",
-      "priceThreeRooms": "1240902",
+      "priceOneRoom": "339480",
+      "priceTwoRooms": "399110",
+      "priceThreeRooms": "1256273",
       "operatorOneRoom": "Biblio Globus",
-      "operatorTwoRooms": "Anex",
-      "operatorThreeRooms": "Anex",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "operatorTwoRooms": "Biblio Globus",
+      "operatorThreeRooms": "Biblio Globus",
+      "priceHistoryOneRoom": [
+        {
+          "price": "336651",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:59:09.208Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "388383",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:59:09.208Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "1240902",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:59:09.208Z"
+        }
+      ],
       "stars": 5,
       "rating": 9.12,
       "reviewCount": 566,
@@ -422,7 +612,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-01T21:50:45.862Z",
-      "updatedAt": "2026-08-02T10:22:54.902Z",
+      "updatedAt": "2026-08-04T07:06:57.022Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -434,14 +624,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/27031_0_1280_720_1.jpg",
       "latitude": 36.66296,
       "longitude": 31.65406,
-      "priceOneRoom": "324186",
-      "priceTwoRooms": "392365",
+      "priceOneRoom": "333387",
+      "priceTwoRooms": "402141",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "324186",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:20.046Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "392365",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:20.046Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.38,
@@ -450,35 +652,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T10:02:05.200Z",
-      "updatedAt": "2026-08-02T10:24:41.601Z",
-      "tourRequestUrl": "",
-      "tourRefererUrl": ""
-    },
-    {
-      "id": "5466358d-a84b-4802-a4e7-ea28fae681ab",
-      "hotelId": 9185,
-      "name": "Club Hotel Turan Prince World",
-      "pageUrl": "https://sletat.ru/turkey/kizilagac/club_hotel_turan_prince_world/",
-      "photoUrl": "https://hotels.sletat.ru/i/im/9185_0_1280_720_1.jpg",
-      "latitude": 36.72795,
-      "longitude": 31.52748,
-      "priceOneRoom": "353128",
-      "priceTwoRooms": "390811",
-      "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
-      "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
-      "stars": 5,
-      "rating": 9.1,
-      "reviewCount": 269,
-      "notes": "",
-      "favorite": false,
-      "disliked": false,
-      "createdAt": "2026-08-02T10:31:48.857Z",
-      "updatedAt": "2026-08-02T10:31:48.857Z",
+      "updatedAt": "2026-08-04T07:07:01.439Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -490,15 +664,33 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/36352_0_1280_720_1.jpg",
       "latitude": 36.80757,
       "longitude": 31.34593,
-      "priceOneRoom": "361480",
-      "priceTwoRooms": "442867",
-      "priceThreeRooms": "823383",
+      "priceOneRoom": "380986",
+      "priceTwoRooms": "453070",
+      "priceThreeRooms": "836799",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "Anex",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "361480",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:58.713Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "442867",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:58.713Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "823383",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:58.713Z"
+        }
+      ],
       "stars": 5,
       "rating": 9.22,
       "reviewCount": 253,
@@ -506,7 +698,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T10:32:59.504Z",
-      "updatedAt": "2026-08-02T10:32:59.504Z",
+      "updatedAt": "2026-08-04T07:07:09.655Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -518,14 +710,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/785_0_1280_720_1.jpg",
       "latitude": 36.5744362,
       "longitude": 30.5821114,
-      "priceOneRoom": "363131",
-      "priceTwoRooms": "761518",
+      "priceOneRoom": "388919",
+      "priceTwoRooms": "784107",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "363131",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:03:39.762Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "761518",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:03:39.762Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.32,
@@ -534,7 +738,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T10:34:04.418Z",
-      "updatedAt": "2026-08-02T10:34:04.418Z",
+      "updatedAt": "2026-08-04T07:07:18.929Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -546,14 +750,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/19145_0_1280_720_1.jpg",
       "latitude": 36.785862,
       "longitude": 31.3852978,
-      "priceOneRoom": "385275",
-      "priceTwoRooms": "495895",
+      "priceOneRoom": "399497",
+      "priceTwoRooms": "521138",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "385275",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:07:22.206Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "495895",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:07:22.206Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.18,
@@ -562,7 +778,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T10:39:27.290Z",
-      "updatedAt": "2026-08-02T10:39:27.290Z",
+      "updatedAt": "2026-08-04T07:07:22.206Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -574,15 +790,27 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/1850_0_1280_720_1.jpg",
       "latitude": 36.81914,
       "longitude": 31.29264,
-      "priceOneRoom": "382167",
+      "priceOneRoom": "391927",
       "priceTwoRooms": "",
-      "priceThreeRooms": "597094",
-      "operatorOneRoom": "Anex",
+      "priceThreeRooms": "616574",
+      "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "",
-      "operatorThreeRooms": "Anex",
-      "priceHistoryOneRoom": [],
+      "operatorThreeRooms": "Biblio Globus",
+      "priceHistoryOneRoom": [
+        {
+          "price": "382167",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:35.464Z"
+        }
+      ],
       "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "597094",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:02:35.464Z"
+        }
+      ],
       "stars": 5,
       "rating": 9.58,
       "reviewCount": 368,
@@ -590,7 +818,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T10:40:05.250Z",
-      "updatedAt": "2026-08-02T10:40:05.250Z",
+      "updatedAt": "2026-08-04T07:07:27.093Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -602,14 +830,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/76384_0_1280_720_1.jpg",
       "latitude": 36.64902,
       "longitude": 31.67517,
-      "priceOneRoom": "291374",
-      "priceTwoRooms": "331941",
+      "priceOneRoom": "306418",
+      "priceTwoRooms": "366148",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
-      "operatorTwoRooms": "RESORT HOLIDAY",
+      "operatorTwoRooms": "АРТ-ТУР",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "291374",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:57:54.640Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "331941",
+          "operator": "RESORT HOLIDAY",
+          "capturedAt": "2026-08-04T06:57:54.640Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.14,
@@ -618,7 +858,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:01:16.352Z",
-      "updatedAt": "2026-08-02T11:01:16.352Z",
+      "updatedAt": "2026-08-04T07:07:30.513Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -630,14 +870,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/37342_0_1280_720_1.jpg",
       "latitude": 36.4848862,
       "longitude": 32.0971,
-      "priceOneRoom": "247073",
-      "priceTwoRooms": "324649",
+      "priceOneRoom": "246295",
+      "priceTwoRooms": "322457",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "247073",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:57:39.273Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "324649",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:57:39.273Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.5,
@@ -646,7 +898,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:12:29.426Z",
-      "updatedAt": "2026-08-02T12:31:51.709Z",
+      "updatedAt": "2026-08-04T07:07:34.506Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -658,14 +910,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/4948_0_1280_720_1.jpg",
       "latitude": 36.5673981,
       "longitude": 31.9152279,
-      "priceOneRoom": "263954",
-      "priceTwoRooms": "311280",
+      "priceOneRoom": "266172",
+      "priceTwoRooms": "313896",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "263954",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:38.714Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "311280",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:38.714Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.78,
@@ -674,7 +938,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:14:51.012Z",
-      "updatedAt": "2026-08-02T11:14:51.012Z",
+      "updatedAt": "2026-08-04T07:07:38.714Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -686,14 +950,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/58086_0_1280_720_1.jpg",
       "latitude": 36.66193,
       "longitude": 31.65421,
-      "priceOneRoom": "282787",
-      "priceTwoRooms": "300156",
+      "priceOneRoom": "278275",
+      "priceTwoRooms": "294905",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "282787",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:01:51.515Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "300156",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:01:51.515Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.92,
@@ -702,7 +978,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:17:06.439Z",
-      "updatedAt": "2026-08-02T12:01:24.668Z",
+      "updatedAt": "2026-08-04T07:07:42.341Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -714,14 +990,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/9333_0_1280_720_1.jpg",
       "latitude": 36.59229,
       "longitude": 31.84483,
-      "priceOneRoom": "272638",
-      "priceTwoRooms": "335090",
+      "priceOneRoom": "274930",
+      "priceTwoRooms": "337906",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "272638",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:45.943Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "335090",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:45.943Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.84,
@@ -730,7 +1018,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:18:35.839Z",
-      "updatedAt": "2026-08-02T11:18:35.839Z",
+      "updatedAt": "2026-08-04T07:07:45.943Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -742,14 +1030,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/115948_0_1280_720_1.jpg",
       "latitude": 36.59485,
       "longitude": 31.83649,
-      "priceOneRoom": "289520",
-      "priceTwoRooms": "406616",
+      "priceOneRoom": "291953",
+      "priceTwoRooms": "410033",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "289520",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:49.916Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "406616",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:49.916Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.58,
@@ -758,7 +1058,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:21:50.689Z",
-      "updatedAt": "2026-08-02T11:21:50.689Z",
+      "updatedAt": "2026-08-04T07:07:49.916Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -770,14 +1070,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/37953_0_1280_720_1.jpg",
       "latitude": 36.80777,
       "longitude": 31.34138,
-      "priceOneRoom": "292719",
-      "priceTwoRooms": "310784",
+      "priceOneRoom": "299923",
+      "priceTwoRooms": "319111",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "292719",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:07:54.019Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "310784",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:07:54.019Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.36,
@@ -786,7 +1098,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:22:50.083Z",
-      "updatedAt": "2026-08-02T11:22:50.083Z",
+      "updatedAt": "2026-08-04T07:07:54.019Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -798,14 +1110,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/9198_0_1280_720_1.jpg",
       "latitude": 36.58101,
       "longitude": 31.87925,
-      "priceOneRoom": "306304",
-      "priceTwoRooms": "336358",
+      "priceOneRoom": "319505",
+      "priceTwoRooms": "365556",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "306304",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:59.241Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "336358",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:07:59.241Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.98,
@@ -814,7 +1138,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:23:40.897Z",
-      "updatedAt": "2026-08-02T11:23:40.897Z",
+      "updatedAt": "2026-08-04T07:07:59.241Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -826,14 +1150,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/18977_0_1280_720_1.jpg",
       "latitude": 36.78517,
       "longitude": 31.38753,
-      "priceOneRoom": "308938",
-      "priceTwoRooms": "339774",
+      "priceOneRoom": "311534",
+      "priceTwoRooms": "342629",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "308938",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:04.563Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "339774",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:04.563Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.16,
@@ -842,7 +1178,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:24:21.828Z",
-      "updatedAt": "2026-08-02T11:24:21.828Z",
+      "updatedAt": "2026-08-04T07:12:22.842Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -854,14 +1190,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/9247_0_1280_720_1.jpg",
       "latitude": 36.72561,
       "longitude": 31.53727,
-      "priceOneRoom": "311183",
-      "priceTwoRooms": "360265",
+      "priceOneRoom": "313798",
+      "priceTwoRooms": "363293",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "311183",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:08.741Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "360265",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:08.741Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.46,
@@ -870,7 +1218,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:24:58.336Z",
-      "updatedAt": "2026-08-02T11:24:58.336Z",
+      "updatedAt": "2026-08-04T07:08:08.741Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -882,14 +1230,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/42525_0_1280_720_1.jpg",
       "latitude": 36.57666,
       "longitude": 31.89155,
-      "priceOneRoom": "297575",
-      "priceTwoRooms": "373718",
+      "priceOneRoom": "308386",
+      "priceTwoRooms": "390353",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "297575",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:13.746Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "373718",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:13.746Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.64,
@@ -898,7 +1258,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:25:49.174Z",
-      "updatedAt": "2026-08-02T11:25:49.174Z",
+      "updatedAt": "2026-08-04T07:08:13.746Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -910,14 +1270,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/71277_0_1280_720_1.jpg",
       "latitude": 36.60546,
       "longitude": 31.79522,
-      "priceOneRoom": "319719",
-      "priceTwoRooms": "404990",
+      "priceOneRoom": "330253",
+      "priceTwoRooms": "434266",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "319719",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:17.754Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "404990",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:17.754Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.5,
@@ -926,7 +1298,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:26:35.238Z",
-      "updatedAt": "2026-08-02T11:26:35.238Z",
+      "updatedAt": "2026-08-04T07:08:17.754Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -938,14 +1310,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/10650_0_1280_720_1.jpg",
       "latitude": 36.69477,
       "longitude": 31.59742,
-      "priceOneRoom": "334384",
-      "priceTwoRooms": "357013",
+      "priceOneRoom": "344006",
+      "priceTwoRooms": "367918",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "334384",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:23.428Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "357013",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:23.428Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.44,
@@ -954,7 +1338,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:28:07.558Z",
-      "updatedAt": "2026-08-02T11:28:07.558Z",
+      "updatedAt": "2026-08-04T07:08:23.428Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -966,14 +1350,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/998_0_1280_720_1.jpg",
       "latitude": 36.61216,
       "longitude": 30.5588,
-      "priceOneRoom": "343999",
-      "priceTwoRooms": "371387",
+      "priceOneRoom": "353367",
+      "priceTwoRooms": "382973",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "343999",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:27.915Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "371387",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:27.915Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.42,
@@ -982,7 +1378,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:29:38.385Z",
-      "updatedAt": "2026-08-02T11:29:38.385Z",
+      "updatedAt": "2026-08-04T07:08:27.915Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -994,14 +1390,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/38590_0_1280_720_1.jpg",
       "latitude": 36.83496,
       "longitude": 31.14773,
-      "priceOneRoom": "346233",
-      "priceTwoRooms": "384498",
+      "priceOneRoom": "347746",
+      "priceTwoRooms": "388385",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "346233",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:32.796Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "384498",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:32.796Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.46,
@@ -1010,7 +1418,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:32:54.942Z",
-      "updatedAt": "2026-08-02T11:32:54.942Z",
+      "updatedAt": "2026-08-04T07:08:32.796Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1022,14 +1430,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/75712_0_1280_720_1.jpg",
       "latitude": 36.83419,
       "longitude": 31.1588364,
-      "priceOneRoom": "375660",
-      "priceTwoRooms": "412178",
+      "priceOneRoom": "364728",
+      "priceTwoRooms": "399007",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Biblio Globus",
+      "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "375660",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:36.674Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "412178",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:36.674Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.28,
@@ -1038,7 +1458,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:33:52.019Z",
-      "updatedAt": "2026-08-02T11:33:52.019Z",
+      "updatedAt": "2026-08-04T07:08:36.674Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1050,14 +1470,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/37406_0_1280_720_1.jpg",
       "latitude": 36.6519547,
       "longitude": 31.67116,
-      "priceOneRoom": "355972",
-      "priceTwoRooms": "438329",
+      "priceOneRoom": "358963",
+      "priceTwoRooms": "442013",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "355972",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:41.656Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "438329",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:08:41.656Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.94,
@@ -1066,7 +1498,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:34:31.298Z",
-      "updatedAt": "2026-08-02T11:34:31.298Z",
+      "updatedAt": "2026-08-04T07:08:41.656Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1078,14 +1510,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/17469_0_1280_720_1.jpg",
       "latitude": 36.85986,
       "longitude": 30.63341,
-      "priceOneRoom": "362743",
-      "priceTwoRooms": "411400",
+      "priceOneRoom": "377069",
+      "priceTwoRooms": "427214",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "362743",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:46.428Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "411400",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:46.428Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.2,
@@ -1094,7 +1538,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:37:33.849Z",
-      "updatedAt": "2026-08-02T11:37:33.849Z",
+      "updatedAt": "2026-08-04T07:08:46.428Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1106,14 +1550,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/40289_0_1280_720_1.jpg",
       "latitude": 36.76511,
       "longitude": 31.41249,
-      "priceOneRoom": "350312",
-      "priceTwoRooms": "404213",
+      "priceOneRoom": "369429",
+      "priceTwoRooms": "423786",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "350312",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:49.972Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "404213",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:49.972Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.78,
@@ -1122,7 +1578,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:38:01.789Z",
-      "updatedAt": "2026-08-02T11:38:01.789Z",
+      "updatedAt": "2026-08-04T07:08:49.972Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1135,13 +1591,19 @@
       "latitude": 36.83271,
       "longitude": 31.15149,
       "priceOneRoom": "",
-      "priceTwoRooms": "363326",
+      "priceTwoRooms": "372857",
       "priceThreeRooms": "",
       "operatorOneRoom": "",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
       "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "363326",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:08:54.889Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.68,
@@ -1150,7 +1612,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:38:21.428Z",
-      "updatedAt": "2026-08-02T11:38:21.428Z",
+      "updatedAt": "2026-08-04T07:08:54.889Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1162,14 +1624,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/37842_0_1280_720_1.jpg",
       "latitude": 36.72057,
       "longitude": 31.5464,
-      "priceOneRoom": "377732",
-      "priceTwoRooms": "437842",
+      "priceOneRoom": "375986",
+      "priceTwoRooms": "435420",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "377732",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:09:00.275Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "437842",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:09:00.275Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.92,
@@ -1178,7 +1652,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:38:43.781Z",
-      "updatedAt": "2026-08-02T11:38:43.781Z",
+      "updatedAt": "2026-08-04T07:09:00.275Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1190,15 +1664,33 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/40009_0_1280_720_1.jpg",
       "latitude": 36.72483,
       "longitude": 31.53344,
-      "priceOneRoom": "378708",
-      "priceTwoRooms": "414910",
-      "priceThreeRooms": "1088602",
+      "priceOneRoom": "381890",
+      "priceTwoRooms": "418397",
+      "priceThreeRooms": "1097750",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "Biblio Globus",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "378708",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:09:04.697Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "414910",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:09:04.697Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "1088602",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:09:04.697Z"
+        }
+      ],
       "stars": 5,
       "rating": 8.92,
       "reviewCount": 672,
@@ -1206,7 +1698,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:39:06.686Z",
-      "updatedAt": "2026-08-02T11:39:06.686Z",
+      "updatedAt": "2026-08-04T07:09:04.697Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1218,14 +1710,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/27512_0_1280_720_1.jpg",
       "latitude": 36.80395,
       "longitude": 31.35341,
-      "priceOneRoom": "356819",
-      "priceTwoRooms": "421209",
+      "priceOneRoom": "394486",
+      "priceTwoRooms": "473501",
       "priceThreeRooms": "",
-      "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorOneRoom": "Biblio Globus",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "356819",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:09.137Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "421209",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:09.137Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 9.46,
@@ -1234,7 +1738,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:39:25.432Z",
-      "updatedAt": "2026-08-02T11:39:25.432Z",
+      "updatedAt": "2026-08-04T07:09:09.137Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1246,14 +1750,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/10647_0_1280_720_1.jpg",
       "latitude": 36.7158127,
       "longitude": 30.5654278,
-      "priceOneRoom": "379448",
-      "priceTwoRooms": "425580",
+      "priceOneRoom": "389115",
+      "priceTwoRooms": "432173",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "379448",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:14.414Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "425580",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:14.414Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.56,
@@ -1262,7 +1778,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:39:47.666Z",
-      "updatedAt": "2026-08-02T11:39:47.666Z",
+      "updatedAt": "2026-08-04T07:09:14.414Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1275,13 +1791,19 @@
       "latitude": 36.81872,
       "longitude": 31.29688,
       "priceOneRoom": "",
-      "priceTwoRooms": "383489",
+      "priceTwoRooms": "386712",
       "priceThreeRooms": "",
       "operatorOneRoom": "",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
       "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "383489",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:59:19.654Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.94,
@@ -1290,7 +1812,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:40:23.614Z",
-      "updatedAt": "2026-08-02T11:40:23.614Z",
+      "updatedAt": "2026-08-04T07:09:18.122Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1302,14 +1824,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/91313_0_1280_720_1.jpg",
       "latitude": 36.80591,
       "longitude": 31.34636,
-      "priceOneRoom": "371581",
-      "priceTwoRooms": "443158",
+      "priceOneRoom": "388821",
+      "priceTwoRooms": "462283",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "371581",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:22.217Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "443158",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:22.217Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.82,
@@ -1318,35 +1852,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T11:40:46.525Z",
-      "updatedAt": "2026-08-02T11:40:46.525Z",
-      "tourRequestUrl": "",
-      "tourRefererUrl": ""
-    },
-    {
-      "id": "7b3b44d1-b39a-42f2-aef9-d7ae02bfc3b5",
-      "hotelId": 42838,
-      "name": "Trendy Hotel Palm Beach",
-      "pageUrl": "https://sletat.ru/turkey/kumkoy/trendy_hotel_palm_beach/",
-      "photoUrl": "https://hotels.sletat.ru/i/im/42838_0_1280_720_1.jpg",
-      "latitude": 36.79544,
-      "longitude": 31.36905,
-      "priceOneRoom": "",
-      "priceTwoRooms": "384368",
-      "priceThreeRooms": "",
-      "operatorOneRoom": "",
-      "operatorTwoRooms": "Biblio Globus",
-      "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
-      "stars": 5,
-      "rating": 9.1,
-      "reviewCount": 0,
-      "notes": "",
-      "favorite": false,
-      "disliked": false,
-      "createdAt": "2026-08-02T11:41:06.892Z",
-      "updatedAt": "2026-08-02T11:41:06.892Z",
+      "updatedAt": "2026-08-04T07:09:22.217Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1358,14 +1864,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/19789_0_1280_720_1.jpg",
       "latitude": 36.98228,
       "longitude": 27.56297,
-      "priceOneRoom": "383527",
-      "priceTwoRooms": "413148",
+      "priceOneRoom": "403219",
+      "priceTwoRooms": "",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
-      "operatorTwoRooms": "Anex",
+      "operatorTwoRooms": "",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "383527",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:01:38.668Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "413148",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:01:38.668Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.04,
@@ -1374,7 +1892,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T12:22:15.997Z",
-      "updatedAt": "2026-08-02T12:22:15.997Z",
+      "updatedAt": "2026-08-04T07:09:25.707Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1386,14 +1904,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/22451_0_1280_720_1.jpg",
       "latitude": 37.0147476,
       "longitude": 27.25453,
-      "priceOneRoom": "394987",
-      "priceTwoRooms": "413246",
+      "priceOneRoom": "430055",
+      "priceTwoRooms": "449055",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "394987",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:01:25.483Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "413246",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:01:25.483Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.76,
@@ -1402,7 +1932,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T12:22:43.767Z",
-      "updatedAt": "2026-08-02T12:22:43.767Z",
+      "updatedAt": "2026-08-04T07:09:29.505Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1414,14 +1944,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/16802_0_1280_720_1.jpg",
       "latitude": 36.8186,
       "longitude": 28.24302,
-      "priceOneRoom": "378865",
-      "priceTwoRooms": "422957",
+      "priceOneRoom": "421729",
+      "priceTwoRooms": "469034",
       "priceThreeRooms": "",
       "operatorOneRoom": "Anex",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "378865",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:57:44.533Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "422957",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:57:44.533Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 5,
       "rating": 8.72,
@@ -1430,7 +1972,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T12:27:36.396Z",
-      "updatedAt": "2026-08-02T12:27:36.396Z",
+      "updatedAt": "2026-08-04T07:09:34.880Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1442,14 +1984,26 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/45980_0_1280_720_1.jpg",
       "latitude": 36.54835,
       "longitude": 31.98154,
-      "priceOneRoom": "297326",
-      "priceTwoRooms": "363423",
+      "priceOneRoom": "299825",
+      "priceTwoRooms": "375110",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Anex",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "297326",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:57:28.183Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "363423",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:57:28.183Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 4,
       "rating": 9.2,
@@ -1458,7 +2012,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T15:35:44.598Z",
-      "updatedAt": "2026-08-02T15:35:44.598Z",
+      "updatedAt": "2026-08-04T07:09:41.676Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1471,14 +2025,26 @@
       "latitude": 36.8566,
       "longitude": 30.87489,
       "priceOneRoom": "",
-      "priceTwoRooms": "340554",
-      "priceThreeRooms": "362646",
+      "priceTwoRooms": "343416",
+      "priceThreeRooms": "366146",
       "operatorOneRoom": "",
       "operatorTwoRooms": "Biblio Globus",
-      "operatorThreeRooms": "Anex",
+      "operatorThreeRooms": "Biblio Globus",
       "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
-      "priceHistoryThreeRooms": [],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "340554",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:56:12.168Z"
+        }
+      ],
+      "priceHistoryThreeRooms": [
+        {
+          "price": "362646",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T06:56:12.168Z"
+        }
+      ],
       "stars": 4,
       "rating": 9.2,
       "reviewCount": 519,
@@ -1486,7 +2052,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T15:39:10.683Z",
-      "updatedAt": "2026-08-02T15:39:10.683Z",
+      "updatedAt": "2026-08-04T07:09:46.685Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1499,13 +2065,19 @@
       "latitude": 36.80858,
       "longitude": 31.34371,
       "priceOneRoom": "",
-      "priceTwoRooms": "363583",
+      "priceTwoRooms": "353748",
       "priceThreeRooms": "",
       "operatorOneRoom": "",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
       "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "363583",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T06:56:01.853Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 4,
       "rating": 9.54,
@@ -1514,7 +2086,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T15:39:30.719Z",
-      "updatedAt": "2026-08-02T15:39:30.719Z",
+      "updatedAt": "2026-08-04T07:09:50.976Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     },
@@ -1526,14 +2098,46 @@
       "photoUrl": "https://hotels.sletat.ru/i/im/15064_0_1280_720_1.jpg",
       "latitude": 36.60895,
       "longitude": 30.55674,
-      "priceOneRoom": "237705",
-      "priceTwoRooms": "291081",
+      "priceOneRoom": "254462",
+      "priceTwoRooms": "315372",
       "priceThreeRooms": "",
       "operatorOneRoom": "Biblio Globus",
       "operatorTwoRooms": "Biblio Globus",
       "operatorThreeRooms": "",
-      "priceHistoryOneRoom": [],
-      "priceHistoryTwoRooms": [],
+      "priceHistoryOneRoom": [
+        {
+          "price": "237705",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-02T15:40:23.331Z"
+        },
+        {
+          "price": "269824",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:56.388Z"
+        },
+        {
+          "price": "237705",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:04:16.319Z"
+        }
+      ],
+      "priceHistoryTwoRooms": [
+        {
+          "price": "291081",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-02T15:40:23.331Z"
+        },
+        {
+          "price": "328882",
+          "operator": "Anex",
+          "capturedAt": "2026-08-04T07:09:56.388Z"
+        },
+        {
+          "price": "291081",
+          "operator": "Biblio Globus",
+          "capturedAt": "2026-08-04T07:04:16.319Z"
+        }
+      ],
       "priceHistoryThreeRooms": [],
       "stars": 4,
       "rating": 9.22,
@@ -1542,7 +2146,7 @@
       "favorite": false,
       "disliked": false,
       "createdAt": "2026-08-02T15:39:49.078Z",
-      "updatedAt": "2026-08-02T15:39:49.078Z",
+      "updatedAt": "2026-08-04T07:09:56.388Z",
       "tourRequestUrl": "",
       "tourRefererUrl": ""
     }

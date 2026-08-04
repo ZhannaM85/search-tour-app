@@ -4,8 +4,12 @@ import { z } from "zod";
 import {
   extractFromTourRows,
   extractHotelPageDataFromHtml,
+  getToursAaData,
   normalizeCurlText,
   parseCurlRequest,
+  readGetToursRequestId,
+  toCreateSearchUrl,
+  toPollSearchUrl,
   type HotelPageExtract,
 } from "./curl.js";
 
@@ -148,6 +152,45 @@ const BROWSER_HEADERS: Record<string, string> = {
   Origin: "https://sletat.ru",
 };
 
+/** Delays between GetTours polls while operators finish loading (~15s cold). */
+const TOUR_POLL_DELAYS_MS = [1000, 1500, 2000, 2500, 3000, 3000, 3000];
+
+/**
+ * Stored GetTours URLs embed a session `requestId` that expires. Start a fresh
+ * search (`requestId=0`), then poll with the returned id + `updateResult=1`.
+ */
+async function fetchToursWithFreshRequest(
+  storedRequestUrl: string,
+  headers: Record<string, string>,
+): Promise<unknown> {
+  const createUrl = toCreateSearchUrl(storedRequestUrl);
+  const createRes = await fetch(createUrl, { method: "GET", headers });
+  if (!createRes.ok) {
+    throw new Error(`Upstream HTTP ${createRes.status}`);
+  }
+  const createJson: unknown = await createRes.json();
+  const requestId = readGetToursRequestId(createJson);
+  if (requestId == null) {
+    throw new Error("Could not start a fresh tour search (no requestId).");
+  }
+
+  const pollUrl = toPollSearchUrl(storedRequestUrl, requestId);
+  const createRows = getToursAaData(createJson);
+  if (createRows && createRows.length > 0) return createJson;
+
+  let lastJson: unknown = createJson;
+  for (const delayMs of TOUR_POLL_DELAYS_MS) {
+    await new Promise((r) => setTimeout(r, delayMs));
+    const pollRes = await fetch(pollUrl, { method: "GET", headers });
+    if (!pollRes.ok) continue;
+    lastJson = await pollRes.json();
+    const rows = getToursAaData(lastJson);
+    if (rows && rows.length > 0) return lastJson;
+  }
+
+  throw new Error("No tour rows in response.");
+}
+
 app.post("/api/refresh-hotel-prices", async (req, res) => {
   try {
     const body = z
@@ -162,44 +205,11 @@ app.post("/api/refresh-hotel-prices", async (req, res) => {
     };
     if (body.refererUrl) headers.Referer = body.refererUrl;
 
-    const upstream = await fetch(body.requestUrl, {
-      method: "GET",
-      headers,
-    });
-    if (!upstream.ok) {
-      res.status(502).json({
-        error: `Upstream HTTP ${upstream.status}`,
-      });
-      return;
-    }
-
-    let json: unknown = await upstream.json();
-    let extracted;
-    try {
-      extracted = extractFromTourRows(json, body.refererUrl);
-    } catch (firstErr) {
-      let lastErr = firstErr;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-        const retry = await fetch(body.requestUrl, {
-          method: "GET",
-          headers,
-        });
-        if (!retry.ok) continue;
-        json = await retry.json();
-        try {
-          extracted = extractFromTourRows(json, body.refererUrl);
-          lastErr = null;
-          break;
-        } catch (err) {
-          lastErr = err;
-        }
-      }
-      if (lastErr) throw lastErr;
-    }
+    const json = await fetchToursWithFreshRequest(body.requestUrl, headers);
+    let extracted = extractFromTourRows(json, body.refererUrl);
 
     const page = await fetchHotelPageData(
-      extracted!.pageUrl,
+      extracted.pageUrl,
       body.refererUrl,
       headers,
     );
@@ -208,20 +218,20 @@ app.post("/api/refresh-hotel-prices", async (req, res) => {
     }
 
     res.json({
-      priceOneRoom: extracted!.priceOneRoom,
-      priceTwoRooms: extracted!.priceTwoRooms,
-      priceThreeRooms: extracted!.priceThreeRooms,
-      operatorOneRoom: extracted!.operatorOneRoom,
-      operatorTwoRooms: extracted!.operatorTwoRooms,
-      operatorThreeRooms: extracted!.operatorThreeRooms,
+      priceOneRoom: extracted.priceOneRoom,
+      priceTwoRooms: extracted.priceTwoRooms,
+      priceThreeRooms: extracted.priceThreeRooms,
+      operatorOneRoom: extracted.operatorOneRoom,
+      operatorTwoRooms: extracted.operatorTwoRooms,
+      operatorThreeRooms: extracted.operatorThreeRooms,
       stars: page.stars,
       rating: page.rating,
       reviewCount: page.reviewCount,
     });
   } catch (err) {
-    res.status(400).json({
-      error: err instanceof Error ? err.message : String(err),
-    });
+    const message = err instanceof Error ? err.message : String(err);
+    const status = message.startsWith("Upstream HTTP") ? 502 : 400;
+    res.status(status).json({ error: message });
   }
 });
 

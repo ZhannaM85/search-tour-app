@@ -120,6 +120,47 @@ export function parseCurlRequest(text: string): {
   return { url, headers, refererUrl };
 }
 
+/**
+ * Start a new GetTours search the way the hotel page does: `requestId=0`
+ * (no `updateResult`). Response Data.requestId is then used to poll results.
+ */
+export function toCreateSearchUrl(storedRequestUrl: string): string {
+  const u = new URL(storedRequestUrl);
+  u.searchParams.set("requestId", "0");
+  u.searchParams.delete("updateResult");
+  return u.toString();
+}
+
+/** Poll results for an active search (`requestId` + `updateResult=1`). */
+export function toPollSearchUrl(
+  storedRequestUrl: string,
+  requestId: number | string,
+): string {
+  const u = new URL(storedRequestUrl);
+  u.searchParams.set("requestId", String(requestId));
+  u.searchParams.set("updateResult", "1");
+  return u.toString();
+}
+
+/** Read Data.requestId from a GetTours JSON payload (> 0 only). */
+export function readGetToursRequestId(payload: unknown): number | null {
+  const root = payload as {
+    GetToursResult?: { Data?: { requestId?: unknown }; IsError?: boolean };
+  };
+  if (root?.GetToursResult?.IsError) return null;
+  const raw = root?.GetToursResult?.Data?.requestId;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function getToursAaData(payload: unknown): unknown[] | null {
+  const root = payload as {
+    GetToursResult?: { Data?: { aaData?: unknown } };
+  };
+  const aaData = root?.GetToursResult?.Data?.aaData;
+  return Array.isArray(aaData) ? aaData : null;
+}
+
 function asNumber(row: unknown[], index: number): number | null {
   const v = row[index];
   if (typeof v === "number" && Number.isFinite(v)) return v;

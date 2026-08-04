@@ -45,8 +45,8 @@ function sanitizeHotel(h) {
     ...rest,
     tourRequestUrl: "",
     tourRefererUrl: "",
-    favorite: false,
-    disliked: false,
+    favorite: Boolean(h.favorite),
+    disliked: Boolean(h.disliked) && !Boolean(h.favorite),
   };
 }
 

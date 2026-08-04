@@ -40,17 +40,24 @@ export function saveViewerPrefs(prefs: ViewerPrefsMap): void {
   localStorage.setItem(VIEWER_PREFS_KEY, JSON.stringify(prefs));
 }
 
-/** Snapshot pins ignored — each visitor starts clean, then merges their prefs. */
+/** Merge per-browser overrides on top of the published snapshot pins. */
 export function applyViewerPrefs(
   hotels: HotelNote[],
   prefs: ViewerPrefsMap,
 ): HotelNote[] {
   return hotels.map((h) => {
     const p = prefs[h.id];
+    if (!p) {
+      return {
+        ...h,
+        favorite: Boolean(h.favorite),
+        disliked: Boolean(h.disliked) && !Boolean(h.favorite),
+      };
+    }
     return {
       ...h,
-      favorite: p?.favorite ?? false,
-      disliked: p?.disliked ?? false,
+      favorite: p.favorite,
+      disliked: p.disliked && !p.favorite,
     };
   });
 }

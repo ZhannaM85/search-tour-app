@@ -23,7 +23,7 @@ npm run dev:web
 
 ## Read-only viewer (local preview)
 
-Same list/map/sort UI without add/edit/refresh. Favorites and dislikes are stored in **this browser only** (separate from your full-app shortlist).
+Same list/map/sort UI without add/edit/refresh. Published favorite/dislike pins come from `shortlist.json`; you can still override them in **this browser only**.
 
 **Important:** the full app and viewer must use the **same origin** (`http://localhost:5174`) to share your shortlist. Different ports have separate `localStorage`.
 
@@ -57,10 +57,10 @@ The public site is a **static** build of the read-only viewer (`npm run build:pa
    ```bash
    npm run prepare:public-shortlist -- path/to/export.json
    ```
-   Writes sanitized [`apps/web/public/shortlist.json`](apps/web/public/shortlist.json) (strips tour request/referer URLs; clears favorite/dislike so each visitor starts clean).
+   Writes sanitized [`apps/web/public/shortlist.json`](apps/web/public/shortlist.json) (strips tour request/referer URLs; keeps favorite/dislike from your export).
 2. Commit and push to `master`.
 3. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds and deploys.
 
 Site: [https://zhannam85.github.io/search-tour-app/](https://zhannam85.github.io/search-tour-app/)
 
-**Privacy:** hotels, prices, and notes in `shortlist.json` become public. Scrub personal notes before preparing the snapshot if needed.
+**Privacy:** hotels, prices, notes, and favorite/dislike pins in `shortlist.json` become public. Scrub personal notes before preparing the snapshot if needed.

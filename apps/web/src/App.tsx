@@ -695,7 +695,7 @@ export default function App() {
           );
         } else {
           setStatus(
-            `Showing ${hotels.length} hotel(s). Favorites and dislikes stay in this browser.`,
+            `Showing ${hotels.length} hotel(s). Stars/thumbs follow the published list; you can still change them in this browser.`,
           );
         }
       } catch (err) {

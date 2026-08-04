@@ -561,6 +561,36 @@ function formatPriceSlot(
   );
 }
 
+/** Persistable old→new display from price history (works on GitHub Pages). */
+function priceFlashFromHistory(note: HotelNote): PriceFlash | undefined {
+  const flash: PriceFlash = {};
+  const h1 = note.priceHistoryOneRoom[0];
+  const h2 = note.priceHistoryTwoRooms[0];
+  const h3 = note.priceHistoryThreeRooms[0];
+  if (h1?.price.trim()) {
+    if (note.priceOneRoom.trim() && h1.price !== note.priceOneRoom) {
+      flash.one = { from: h1.price, to: note.priceOneRoom };
+    } else if (!note.priceOneRoom.trim()) {
+      flash.one = { from: h1.price, unavailable: true };
+    }
+  }
+  if (h2?.price.trim()) {
+    if (note.priceTwoRooms.trim() && h2.price !== note.priceTwoRooms) {
+      flash.two = { from: h2.price, to: note.priceTwoRooms };
+    } else if (!note.priceTwoRooms.trim()) {
+      flash.two = { from: h2.price, unavailable: true };
+    }
+  }
+  if (h3?.price.trim()) {
+    if (note.priceThreeRooms.trim() && h3.price !== note.priceThreeRooms) {
+      flash.three = { from: h3.price, to: note.priceThreeRooms };
+    } else if (!note.priceThreeRooms.trim()) {
+      flash.three = { from: h3.price, unavailable: true };
+    }
+  }
+  return flash.one || flash.two || flash.three ? flash : undefined;
+}
+
 function bootstrapNotes(): { notes: HotelNote[]; filled: number } {
   if (isPublicViewer) return { notes: [], filled: 0 };
   const loaded = loadNotes();
@@ -2302,37 +2332,41 @@ export default function App() {
                         ) : null;
                       })()}
                       <div className="mt-1 text-sm text-slate-600">
-                        {[
-                          formatPriceSlot(
-                            "1 room",
-                            n.priceOneRoom,
-                            n.operatorOneRoom,
-                            priceFlashById[n.id]?.one,
-                          ),
-                          formatPriceSlot(
-                            "2 rooms",
-                            n.priceTwoRooms,
-                            n.operatorTwoRooms,
-                            priceFlashById[n.id]?.two,
-                          ),
-                          formatPriceSlot(
-                            "3 rooms",
-                            n.priceThreeRooms,
-                            n.operatorThreeRooms,
-                            priceFlashById[n.id]?.three,
-                          ),
-                        ]
-                          .filter(Boolean)
-                          .reduce<ReactNode[]>((acc, node, i) => {
-                            if (!node) return acc;
-                            if (acc.length) {
-                              acc.push(
-                                <span key={`sep-${i}`}> · </span>,
-                              );
-                            }
-                            acc.push(node);
-                            return acc;
-                          }, [])}
+                        {(() => {
+                          const flash =
+                            priceFlashById[n.id] ?? priceFlashFromHistory(n);
+                          return [
+                            formatPriceSlot(
+                              "1 room",
+                              n.priceOneRoom,
+                              n.operatorOneRoom,
+                              flash?.one,
+                            ),
+                            formatPriceSlot(
+                              "2 rooms",
+                              n.priceTwoRooms,
+                              n.operatorTwoRooms,
+                              flash?.two,
+                            ),
+                            formatPriceSlot(
+                              "3 rooms",
+                              n.priceThreeRooms,
+                              n.operatorThreeRooms,
+                              flash?.three,
+                            ),
+                          ]
+                            .filter(Boolean)
+                            .reduce<ReactNode[]>((acc, node, i) => {
+                              if (!node) return acc;
+                              if (acc.length) {
+                                acc.push(
+                                  <span key={`sep-${i}`}> · </span>,
+                                );
+                              }
+                              acc.push(node);
+                              return acc;
+                            }, []);
+                        })()}
                       </div>
                       {!isPublicViewer && inlineNoteId === n.id ? (
                         <div

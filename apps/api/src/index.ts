@@ -10,6 +10,7 @@ import {
   readGetToursRequestId,
   toCreateSearchUrl,
   toPollSearchUrl,
+  toursLoadComplete,
   type HotelPageExtract,
 } from "./curl.js";
 
@@ -157,7 +158,8 @@ const TOUR_POLL_DELAYS_MS = [1000, 1500, 2000, 2500, 3000, 3000, 3000];
 
 /**
  * Stored GetTours URLs embed a session `requestId` that expires. Start a fresh
- * search (`requestId=0`), then poll with the returned id + `updateResult=1`.
+ * search (`requestId=0`), then poll with the returned id + `updateResult=1`
+ * until operators finish (or the delay budget runs out).
  */
 async function fetchToursWithFreshRequest(
   storedRequestUrl: string,
@@ -175,18 +177,24 @@ async function fetchToursWithFreshRequest(
   }
 
   const pollUrl = toPollSearchUrl(storedRequestUrl, requestId);
-  const createRows = getToursAaData(createJson);
-  if (createRows && createRows.length > 0) return createJson;
-
   let lastJson: unknown = createJson;
+  if (toursLoadComplete(createJson)) {
+    const rows = getToursAaData(createJson);
+    if (rows && rows.length > 0) return createJson;
+  }
+
   for (const delayMs of TOUR_POLL_DELAYS_MS) {
     await new Promise((r) => setTimeout(r, delayMs));
     const pollRes = await fetch(pollUrl, { method: "GET", headers });
     if (!pollRes.ok) continue;
     lastJson = await pollRes.json();
+    if (!toursLoadComplete(lastJson)) continue;
     const rows = getToursAaData(lastJson);
     if (rows && rows.length > 0) return lastJson;
   }
+
+  const finalRows = getToursAaData(lastJson);
+  if (finalRows && finalRows.length > 0) return lastJson;
 
   throw new Error("No tour rows in response.");
 }
@@ -213,9 +221,14 @@ app.post("/api/refresh-hotel-prices", async (req, res) => {
       body.refererUrl,
       headers,
     );
-    if (page.rooms.size > 0) {
-      extracted = extractFromTourRows(json, body.refererUrl, page.rooms);
+    // Without the room catalog we cannot map offers → 1/2/3 rooms. Fail
+    // loudly so the client keeps nothing stale and does not "heal" history.
+    if (page.rooms.size === 0) {
+      throw new Error(
+        "Could not load hotel room catalog; prices not updated.",
+      );
     }
+    extracted = extractFromTourRows(json, body.refererUrl, page.rooms);
 
     res.json({
       priceOneRoom: extracted.priceOneRoom,

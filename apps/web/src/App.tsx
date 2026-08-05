@@ -128,7 +128,6 @@ type ApplyRefreshResult = {
   updated: HotelNote | null;
   flash: PriceFlash;
   unavailableLabels: string[];
-  restoredLabels: string[];
   anyPrice: boolean;
 };
 
@@ -139,7 +138,6 @@ function applyRefreshedPricesToNote(
 ): ApplyRefreshResult {
   const flash: PriceFlash = {};
   const unavailableLabels: string[] = [];
-  const restoredLabels: string[] = [];
 
   const anyPrice =
     refreshed.priceOneRoom != null ||
@@ -154,12 +152,10 @@ function applyRefreshedPricesToNote(
     refreshed.reviewCount != null;
 
   /**
-   * Only treat a null slot as “no longer available” when at least one room
-   * price resolved. If every slot is null (empty catalog, strict filters, or
-   * failed join), keep prior prices instead of wiping the card to Was:-only.
+   * A successful refresh always includes a room catalog (API errors otherwise).
+   * Null slots mean that room count has no live offer — clear stale prices
+   * instead of keeping or resurrecting history (e.g. Anex from days ago).
    */
-  const clearMissingSlots = anyPrice;
-
   function applyRoomSlot(
     label: string,
     flashKey: keyof PriceFlash,
@@ -193,7 +189,7 @@ function applyRefreshedPricesToNote(
       };
     }
 
-    if (clearMissingSlots && prevPrice.trim()) {
+    if (prevPrice.trim()) {
       unavailableLabels.push(label);
       flash[flashKey] = { from: prevPrice, unavailable: true };
       const history =
@@ -207,30 +203,9 @@ function applyRefreshedPricesToNote(
       return { price: "", operator: "", history };
     }
 
-    // No resolvable prices this refresh — keep what we have.
-    if (prevPrice.trim()) {
-      return {
-        price: prevPrice,
-        operator: prevOperator,
-        history: prevHistory,
-      };
-    }
-
-    // Heal an earlier wipe: current empty but Was:/history still has a value
-    // (Selectum-style). Re-show last known until a real offer returns.
-    const last = prevHistory[0];
-    if (last?.price.trim()) {
-      restoredLabels.push(label);
-      return {
-        price: last.price,
-        operator: last.operator,
-        history: prevHistory,
-      };
-    }
-
     return {
-      price: prevPrice,
-      operator: prevOperator,
+      price: "",
+      operator: "",
       history: prevHistory,
     };
   }
@@ -274,31 +249,20 @@ function applyRefreshedPricesToNote(
     rating === note.rating &&
     reviewCount === note.reviewCount;
 
-  if (
-    !anyPrice &&
-    !anyQuality &&
-    unavailableLabels.length === 0 &&
-    restoredLabels.length === 0
-  ) {
+  if (!anyPrice && !anyQuality && unavailableLabels.length === 0) {
     return {
       updated: null,
       flash,
       unavailableLabels,
-      restoredLabels,
       anyPrice,
     };
   }
 
-  if (
-    pricesUnchanged &&
-    unavailableLabels.length === 0 &&
-    restoredLabels.length === 0
-  ) {
+  if (pricesUnchanged && unavailableLabels.length === 0) {
     return {
       updated: null,
       flash,
       unavailableLabels,
-      restoredLabels,
       anyPrice,
     };
   }
@@ -322,7 +286,6 @@ function applyRefreshedPricesToNote(
     },
     flash,
     unavailableLabels,
-    restoredLabels,
     anyPrice,
   };
 }
@@ -1478,7 +1441,6 @@ export default function App() {
     name: string;
     kind: "updated" | "kept" | "skipped" | "error";
     unavailableLabels: string[];
-    restoredLabels: string[];
     anyPrice: boolean;
     error?: string;
   }> {
@@ -1488,7 +1450,6 @@ export default function App() {
         name: id,
         kind: "skipped",
         unavailableLabels: [],
-        restoredLabels: [],
         anyPrice: false,
       };
     }
@@ -1497,7 +1458,6 @@ export default function App() {
         name: note.name,
         kind: "skipped",
         unavailableLabels: [],
-        restoredLabels: [],
         anyPrice: false,
       };
     }
@@ -1518,7 +1478,6 @@ export default function App() {
           name: note.name,
           kind: "kept",
           unavailableLabels: [],
-          restoredLabels: [],
           anyPrice: false,
         };
       }
@@ -1556,7 +1515,6 @@ export default function App() {
         name: note.name,
         kind: "updated",
         unavailableLabels: result.unavailableLabels,
-        restoredLabels: result.restoredLabels,
         anyPrice: result.anyPrice,
       };
     } catch (err) {
@@ -1564,7 +1522,6 @@ export default function App() {
         name: note.name,
         kind: "error",
         unavailableLabels: [],
-        restoredLabels: [],
         anyPrice: false,
         error: err instanceof Error ? err.message : String(err),
       };
@@ -1607,18 +1564,12 @@ export default function App() {
       outcome.unavailableLabels.length > 0
         ? ` Warning: ${outcome.unavailableLabels.join(", ")} no longer available.`
         : "";
-    const restoredMsg =
-      outcome.restoredLabels.length > 0
-        ? ` Restored last known ${outcome.restoredLabels.join(", ")} from history (no matching offer this search).`
-        : "";
     setStatus(
       outcome.anyPrice
         ? `Updated prices for “${outcome.name}”.${unavailableMsg}`
-        : outcome.restoredLabels.length > 0
-          ? `No matching tour prices for “${outcome.name}”.${restoredMsg}`
-          : outcome.unavailableLabels.length > 0
-            ? `Cleared unavailable room prices for “${outcome.name}”.${unavailableMsg}`
-            : `Updated hotel rating for “${outcome.name}” — no matching tour prices.`,
+        : outcome.unavailableLabels.length > 0
+          ? `Cleared unavailable room prices for “${outcome.name}”.${unavailableMsg}`
+          : `Updated hotel rating for “${outcome.name}” — no matching tour prices.`,
     );
   }
 

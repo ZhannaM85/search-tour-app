@@ -161,6 +161,25 @@ export function getToursAaData(payload: unknown): unknown[] | null {
   return Array.isArray(aaData) ? aaData : null;
 }
 
+/**
+ * True when GetTours `loadState` lists operators and every one is processed.
+ * Prefer waiting for this over returning on the first non-empty `aaData`
+ * (early rows can omit operators that still change the cheapest price).
+ */
+export function toursLoadComplete(payload: unknown): boolean {
+  const root = payload as {
+    GetToursResult?: { Data?: { loadState?: unknown } };
+  };
+  const loadState = root?.GetToursResult?.Data?.loadState;
+  if (!Array.isArray(loadState) || loadState.length === 0) return false;
+  return loadState.every(
+    (op) =>
+      op != null &&
+      typeof op === "object" &&
+      (op as { IsProcessed?: unknown }).IsProcessed === true,
+  );
+}
+
 function asNumber(row: unknown[], index: number): number | null {
   const v = row[index];
   if (typeof v === "number" && Number.isFinite(v)) return v;

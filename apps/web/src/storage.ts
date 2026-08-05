@@ -78,6 +78,12 @@ function normalizeNote(value: unknown): HotelNote | null {
       typeof n.operatorTwoRooms === "string" ? n.operatorTwoRooms : "",
     operatorThreeRooms:
       typeof n.operatorThreeRooms === "string" ? n.operatorThreeRooms : "",
+    roomNameOneRoom:
+      typeof n.roomNameOneRoom === "string" ? n.roomNameOneRoom : "",
+    roomNameTwoRooms:
+      typeof n.roomNameTwoRooms === "string" ? n.roomNameTwoRooms : "",
+    roomNameThreeRooms:
+      typeof n.roomNameThreeRooms === "string" ? n.roomNameThreeRooms : "",
     tourRequestUrl: typeof n.tourRequestUrl === "string" ? n.tourRequestUrl : "",
     tourRefererUrl: typeof n.tourRefererUrl === "string" ? n.tourRefererUrl : "",
     priceHistoryOneRoom: normalizeHistory(n.priceHistoryOneRoom),

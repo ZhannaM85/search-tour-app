@@ -8,6 +8,7 @@ import StarIcon from "./StarIcon";
 import ThumbsDownIcon from "./ThumbsDownIcon";
 import {
   ratingPriorFromHotels,
+  type RatingPrior,
   weightedRating,
 } from "./weightedRating";
 
@@ -21,6 +22,32 @@ const markerIcon = L.icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+/**
+ * Leaflet keeps popup HTML until the marker remounts. Include fields the
+ * popup shows so price refresh / quality edits replace stale content.
+ */
+function markerContentKey(note: HotelNote): string {
+  return [
+    note.id,
+    note.updatedAt,
+    note.priceOneRoom,
+    note.priceTwoRooms,
+    note.priceThreeRooms,
+    note.operatorOneRoom,
+    note.operatorTwoRooms,
+    note.operatorThreeRooms,
+    note.roomNameOneRoom,
+    note.roomNameTwoRooms,
+    note.roomNameThreeRooms,
+    note.stars ?? "",
+    note.rating ?? "",
+    note.reviewCount ?? "",
+    note.favorite ? "1" : "0",
+    note.disliked ? "1" : "0",
+    note.notes,
+  ].join("\0");
+}
 
 function FitBounds({
   notes,
@@ -169,19 +196,25 @@ function HotelMarker({
           {note.priceOneRoom ? (
             <div>
               1 room: {formatPrice(note.priceOneRoom)}
-              {note.operatorOneRoom ? ` (${note.operatorOneRoom})` : ""}
+              {note.operatorOneRoom || note.roomNameOneRoom
+                ? ` (${[note.operatorOneRoom, note.roomNameOneRoom].filter(Boolean).join(" · ")})`
+                : ""}
             </div>
           ) : null}
           {note.priceTwoRooms ? (
             <div>
               2 rooms: {formatPrice(note.priceTwoRooms)}
-              {note.operatorTwoRooms ? ` (${note.operatorTwoRooms})` : ""}
+              {note.operatorTwoRooms || note.roomNameTwoRooms
+                ? ` (${[note.operatorTwoRooms, note.roomNameTwoRooms].filter(Boolean).join(" · ")})`
+                : ""}
             </div>
           ) : null}
           {note.priceThreeRooms ? (
             <div>
               3 rooms: {formatPrice(note.priceThreeRooms)}
-              {note.operatorThreeRooms ? ` (${note.operatorThreeRooms})` : ""}
+              {note.operatorThreeRooms || note.roomNameThreeRooms
+                ? ` (${[note.operatorThreeRooms, note.roomNameThreeRooms].filter(Boolean).join(" · ")})`
+                : ""}
             </div>
           ) : null}
           {note.notes ? (
@@ -202,12 +235,15 @@ export default function HotelsMap({
   notes,
   focusId,
   focusNonce = 0,
+  ratingPrior: ratingPriorProp,
   onToggleFavorite,
   onToggleDisliked,
 }: {
   notes: HotelNote[];
   focusId?: string | null;
   focusNonce?: number;
+  /** Prefer the list’s prior so w-scores match; falls back to notes on the map. */
+  ratingPrior?: RatingPrior;
   onToggleFavorite?: (id: string) => void;
   onToggleDisliked?: (id: string) => void;
 }) {
@@ -215,7 +251,7 @@ export default function HotelsMap({
     notes.length > 0
       ? [notes[0].latitude, notes[0].longitude]
       : [36.8, 31.4];
-  const ratingPrior = ratingPriorFromHotels(notes);
+  const ratingPrior = ratingPriorProp ?? ratingPriorFromHotels(notes);
 
   return (
     <MapContainer
@@ -232,7 +268,7 @@ export default function HotelsMap({
       <FitBounds notes={notes} enabled={!focusId} />
       {notes.map((n) => (
         <HotelMarker
-          key={n.id}
+          key={markerContentKey(n)}
           note={n}
           focused={n.id === focusId}
           focusNonce={focusNonce}

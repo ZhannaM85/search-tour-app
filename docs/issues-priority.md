@@ -53,5 +53,8 @@ _Make per-hotel price refresh trustworthy when offers change or disappear._
 |---|--------|-------|-------|
 | [#11](https://github.com/ZhannaM85/search-tour-app/issues/11) | ✅ Done | Refresh icon does not update hotel prices | Fresh GetTours via `requestId=0`, then poll; validated live (price flash) |
 | [#12](https://github.com/ZhannaM85/search-tour-app/issues/12) | ✅ Done | Clear stale room prices when refresh finds no offer | Clear price/operator + flash “no longer available”; validated on device (Galeri 2 rooms) |
+| [#14](https://github.com/ZhannaM85/search-tour-app/issues/14) | ✅ Done | Reliable price extraction (full `[88]` only) | Display = min full `[88]` per roomCount; never promo `[42]`; skip room 0; no referer operator/meal filter on extract; show winning room name; map popup stays in sync |
+
+**Trust rule:** shortlist price = cheapest GetTours full price (`aaData[88] > 0`) for a typed room (`[44] > 0` joined to hotel catalog `roomCount`). Never use promo `[42]`.
 
 ---

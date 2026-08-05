@@ -44,6 +44,10 @@ function isHotelNote(value: unknown): value is HotelNote {
       typeof n.operatorTwoRooms === "string") &&
     (n.operatorThreeRooms === undefined ||
       typeof n.operatorThreeRooms === "string") &&
+    (n.roomNameOneRoom === undefined || typeof n.roomNameOneRoom === "string") &&
+    (n.roomNameTwoRooms === undefined || typeof n.roomNameTwoRooms === "string") &&
+    (n.roomNameThreeRooms === undefined ||
+      typeof n.roomNameThreeRooms === "string") &&
     (n.tourRequestUrl === undefined || typeof n.tourRequestUrl === "string") &&
     (n.tourRefererUrl === undefined || typeof n.tourRefererUrl === "string") &&
     isHistoryArray(n.priceHistoryOneRoom) &&
@@ -87,6 +91,12 @@ function withDefaults(notes: HotelNote[]): HotelNote[] {
       typeof n.operatorTwoRooms === "string" ? n.operatorTwoRooms : "",
     operatorThreeRooms:
       typeof n.operatorThreeRooms === "string" ? n.operatorThreeRooms : "",
+    roomNameOneRoom:
+      typeof n.roomNameOneRoom === "string" ? n.roomNameOneRoom : "",
+    roomNameTwoRooms:
+      typeof n.roomNameTwoRooms === "string" ? n.roomNameTwoRooms : "",
+    roomNameThreeRooms:
+      typeof n.roomNameThreeRooms === "string" ? n.roomNameThreeRooms : "",
     tourRequestUrl: typeof n.tourRequestUrl === "string" ? n.tourRequestUrl : "",
     tourRefererUrl: typeof n.tourRefererUrl === "string" ? n.tourRefererUrl : "",
     priceHistoryOneRoom: normalizeHistory(n.priceHistoryOneRoom),

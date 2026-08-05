@@ -7,11 +7,11 @@ export type ParsedHotel = {
   photoUrl: string;
   latitude: number;
   longitude: number;
-  /** Cheapest 1-room tour price (joined via hotel room catalog). */
+  /** Cheapest 1-room full tour price (joined via hotel room catalog). */
   priceOneRoom: number | null;
-  /** Cheapest 2-room tour price (joined via hotel room catalog). */
+  /** Cheapest 2-room full tour price (joined via hotel room catalog). */
   priceTwoRooms: number | null;
-  /** Cheapest 3-room tour price (joined via hotel room catalog). */
+  /** Cheapest 3-room full tour price (joined via hotel room catalog). */
   priceThreeRooms: number | null;
   /** Operator name for the winning 1-room offer (aaData[18]). */
   operatorOneRoom: string | null;
@@ -19,6 +19,10 @@ export type ParsedHotel = {
   operatorTwoRooms: string | null;
   /** Operator name for the winning 3-room offer (aaData[18]). */
   operatorThreeRooms: string | null;
+  /** Catalog room name for the winning 1-room offer. */
+  roomNameOneRoom: string | null;
+  roomNameTwoRooms: string | null;
+  roomNameThreeRooms: string | null;
   /** Star category from hotel page SSR (e.g. 5). */
   stars: number | null;
   /** Guest rating from hotel page SSR (e.g. 9.58). */
@@ -36,6 +40,9 @@ export type RefreshedPrices = {
   operatorOneRoom: string | null;
   operatorTwoRooms: string | null;
   operatorThreeRooms: string | null;
+  roomNameOneRoom: string | null;
+  roomNameTwoRooms: string | null;
+  roomNameThreeRooms: string | null;
   stars: number | null;
   rating: number | null;
   reviewCount: number | null;

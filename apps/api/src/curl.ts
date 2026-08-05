@@ -8,16 +8,15 @@ const IDX = {
   OPERATOR_NAME: 18,
   /** Protocol-relative hotel thumbnail, e.g. `//host/i/p/{id}_30.jpg` */
   PHOTO: 29,
-  /** System meal id (joins referer `mealsIds`). */
+  /** System meal id (legacy referer `mealsIds`; not used for price selection). */
   MEAL_ID: 41,
-  /** Tour price number (often promo/net; may be lower than the site button). */
+  /** Promo/net price — never used for display (see FULL_PRICE). */
   PRICE: 42,
   /** System room-type id — joins to hotel page `rooms[].id`. */
   ROOM_TYPE_ID: 44,
   /**
-   * Full tour price incl. operator fees — matches the amount shown on the hotel site.
-   * Prefer this over PRICE when > 0 (promo rows differ: 42 < 88). When 0, the
-   * site typically does not show that offer's net price as the button amount.
+   * Full tour price — the only amount we display. Never fall back to PRICE
+   * (`[42]`); rows with full == 0 are skipped.
    */
   FULL_PRICE: 88,
   LAT: 92,
@@ -310,6 +309,7 @@ export function extractRoomCatalogFromHtml(
 type PriceWithOperator = {
   price: number | null;
   operator: string | null;
+  roomName: string | null;
 };
 
 export type TourPriceFilters = {
@@ -347,58 +347,70 @@ export function parseRefererPriceFilters(refererUrl: string): TourPriceFilters {
   return out;
 }
 
-/**
- * Prefer full site price `[88]` when > 0 (matches the yellow button when both
- * exist; promo/net `[42]` can be lower).
- * When `[88]` is 0 or missing (common for some operators e.g. RESORT HOLIDAY),
- * fall back to `[42]`.
- */
+/** Full price `[88]` only — never promo `[42]`. */
 function tourPrice(row: unknown[]): number | null {
   const full = asNumber(row, IDX.FULL_PRICE);
   if (full != null && full > 0) return full;
-  const price = asNumber(row, IDX.PRICE);
-  if (price != null && price > 0) return price;
   return null;
 }
 
-function cheapestPricesByRoomCount(
-  aaData: unknown[],
-  hotelId: number | null,
-  catalog: Map<number, RoomCatalogEntry>,
-  filters: TourPriceFilters = {},
-): {
+export type RoomCountPrices = {
   priceOneRoom: number | null;
   priceTwoRooms: number | null;
   priceThreeRooms: number | null;
   operatorOneRoom: string | null;
   operatorTwoRooms: string | null;
   operatorThreeRooms: string | null;
-} {
-  const one: PriceWithOperator = { price: null, operator: null };
-  const two: PriceWithOperator = { price: null, operator: null };
-  const three: PriceWithOperator = { price: null, operator: null };
+  roomNameOneRoom: string | null;
+  roomNameTwoRooms: string | null;
+  roomNameThreeRooms: string | null;
+};
+
+function emptyRoomCountPrices(): RoomCountPrices {
+  return {
+    priceOneRoom: null,
+    priceTwoRooms: null,
+    priceThreeRooms: null,
+    operatorOneRoom: null,
+    operatorTwoRooms: null,
+    operatorThreeRooms: null,
+    roomNameOneRoom: null,
+    roomNameTwoRooms: null,
+    roomNameThreeRooms: null,
+  };
+}
+
+/**
+ * Cheapest full `[88]` price per room count. Skips untyped rooms (`id <= 0`)
+ * and does not apply referer operator/meal filters.
+ */
+function cheapestPricesByRoomCount(
+  aaData: unknown[],
+  hotelId: number | null,
+  catalog: Map<number, RoomCatalogEntry>,
+): RoomCountPrices {
+  const one: PriceWithOperator = { price: null, operator: null, roomName: null };
+  const two: PriceWithOperator = { price: null, operator: null, roomName: null };
+  const three: PriceWithOperator = {
+    price: null,
+    operator: null,
+    roomName: null,
+  };
 
   for (const raw of aaData) {
     if (!Array.isArray(raw)) continue;
     if (hotelId != null && asNumber(raw, IDX.HOTEL_ID) !== hotelId) continue;
 
-    if (filters.operatorIds && filters.operatorIds.size > 0) {
-      const opId = asNumber(raw, IDX.OPERATOR_ID);
-      if (opId == null || !filters.operatorIds.has(opId)) continue;
-    }
-    if (filters.mealIds && filters.mealIds.size > 0) {
-      const mealId = asNumber(raw, IDX.MEAL_ID);
-      if (mealId == null || !filters.mealIds.has(mealId)) continue;
-    }
-
     const roomTypeId = asNumber(raw, IDX.ROOM_TYPE_ID);
     const price = tourPrice(raw);
-    if (roomTypeId == null || price == null) continue;
+    // Room type 0 = untyped offer — not a sletat room group; never win a slot.
+    if (roomTypeId == null || roomTypeId <= 0 || price == null) continue;
 
     const room = catalog.get(roomTypeId);
     if (!room) continue;
 
     const operator = asString(raw, IDX.OPERATOR_NAME).trim() || null;
+    const roomName = room.name.trim() || null;
     const slot =
       room.roomCount === 1
         ? one
@@ -411,6 +423,7 @@ function cheapestPricesByRoomCount(
     if (slot.price == null || price < slot.price) {
       slot.price = price;
       slot.operator = operator;
+      slot.roomName = roomName;
     }
   }
 
@@ -421,6 +434,9 @@ function cheapestPricesByRoomCount(
     operatorOneRoom: one.operator,
     operatorTwoRooms: two.operator,
     operatorThreeRooms: three.operator,
+    roomNameOneRoom: one.roomName,
+    roomNameTwoRooms: two.roomName,
+    roomNameThreeRooms: three.roomName,
   };
 }
 
@@ -435,13 +451,7 @@ export function extractFromTourRows(
   photoUrl: string;
   latitude: number;
   longitude: number;
-  priceOneRoom: number | null;
-  priceTwoRooms: number | null;
-  priceThreeRooms: number | null;
-  operatorOneRoom: string | null;
-  operatorTwoRooms: string | null;
-  operatorThreeRooms: string | null;
-} {
+} & RoomCountPrices {
   const root = payload as {
     GetToursResult?: { Data?: { aaData?: unknown[] } };
   };
@@ -461,18 +471,10 @@ export function extractFromTourRows(
   }
 
   const hotelId = asNumber(row, IDX.HOTEL_ID);
-  const filters = parseRefererPriceFilters(refererUrl);
   const prices =
     roomCatalog && roomCatalog.size > 0
-      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog, filters)
-      : {
-          priceOneRoom: null,
-          priceTwoRooms: null,
-          priceThreeRooms: null,
-          operatorOneRoom: null,
-          operatorTwoRooms: null,
-          operatorThreeRooms: null,
-        };
+      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog)
+      : emptyRoomCountPrices();
 
   return {
     hotelId,
@@ -481,11 +483,6 @@ export function extractFromTourRows(
     photoUrl: hotelPhotoUrl(hotelId, asString(row, IDX.PHOTO)),
     latitude,
     longitude,
-    priceOneRoom: prices.priceOneRoom,
-    priceTwoRooms: prices.priceTwoRooms,
-    priceThreeRooms: prices.priceThreeRooms,
-    operatorOneRoom: prices.operatorOneRoom,
-    operatorTwoRooms: prices.operatorTwoRooms,
-    operatorThreeRooms: prices.operatorThreeRooms,
+    ...prices,
   };
 }

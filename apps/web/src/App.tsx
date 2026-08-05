@@ -68,6 +68,9 @@ type FormState = {
   operatorOneRoom: string;
   operatorTwoRooms: string;
   operatorThreeRooms: string;
+  roomNameOneRoom: string;
+  roomNameTwoRooms: string;
+  roomNameThreeRooms: string;
   tourRequestUrl: string;
   tourRefererUrl: string;
   priceHistoryOneRoom: PriceHistoryEntry[];
@@ -96,6 +99,9 @@ const emptyForm = (): FormState => ({
   operatorOneRoom: "",
   operatorTwoRooms: "",
   operatorThreeRooms: "",
+  roomNameOneRoom: "",
+  roomNameTwoRooms: "",
+  roomNameThreeRooms: "",
   tourRequestUrl: "",
   tourRefererUrl: "",
   priceHistoryOneRoom: [],
@@ -164,9 +170,11 @@ function applyRefreshedPricesToNote(
     prevHistory: PriceHistoryEntry[],
     nextPrice: number | null,
     nextOperator: string | null,
+    nextRoomName: string | null,
   ): {
     price: string;
     operator: string;
+    roomName: string;
     history: PriceHistoryEntry[];
   } {
     if (nextPrice != null) {
@@ -185,6 +193,7 @@ function applyRefreshedPricesToNote(
       return {
         price: next,
         operator: nextOperator ?? "",
+        roomName: nextRoomName?.trim() || "",
         history,
       };
     }
@@ -200,12 +209,13 @@ function applyRefreshedPricesToNote(
               operator: prevOperator,
               capturedAt: now,
             });
-      return { price: "", operator: "", history };
+      return { price: "", operator: "", roomName: "", history };
     }
 
     return {
       price: "",
       operator: "",
+      roomName: "",
       history: prevHistory,
     };
   }
@@ -218,6 +228,7 @@ function applyRefreshedPricesToNote(
     note.priceHistoryOneRoom,
     refreshed.priceOneRoom,
     refreshed.operatorOneRoom,
+    refreshed.roomNameOneRoom,
   );
   const two = applyRoomSlot(
     "2 rooms",
@@ -227,6 +238,7 @@ function applyRefreshedPricesToNote(
     note.priceHistoryTwoRooms,
     refreshed.priceTwoRooms,
     refreshed.operatorTwoRooms,
+    refreshed.roomNameTwoRooms,
   );
   const three = applyRoomSlot(
     "3 rooms",
@@ -236,15 +248,19 @@ function applyRefreshedPricesToNote(
     note.priceHistoryThreeRooms,
     refreshed.priceThreeRooms,
     refreshed.operatorThreeRooms,
+    refreshed.roomNameThreeRooms,
   );
 
   const pricesUnchanged =
     one.price === note.priceOneRoom &&
     one.operator === note.operatorOneRoom &&
+    one.roomName === note.roomNameOneRoom &&
     two.price === note.priceTwoRooms &&
     two.operator === note.operatorTwoRooms &&
+    two.roomName === note.roomNameTwoRooms &&
     three.price === note.priceThreeRooms &&
     three.operator === note.operatorThreeRooms &&
+    three.roomName === note.roomNameThreeRooms &&
     stars === note.stars &&
     rating === note.rating &&
     reviewCount === note.reviewCount;
@@ -276,6 +292,9 @@ function applyRefreshedPricesToNote(
       operatorOneRoom: one.operator,
       operatorTwoRooms: two.operator,
       operatorThreeRooms: three.operator,
+      roomNameOneRoom: one.roomName,
+      roomNameTwoRooms: two.roomName,
+      roomNameThreeRooms: three.roomName,
       priceHistoryOneRoom: one.history,
       priceHistoryTwoRooms: two.history,
       priceHistoryThreeRooms: three.history,
@@ -338,10 +357,18 @@ function isEditDirty(form: FormState, baseline: EditBaseline | null): boolean {
   );
 }
 
-function formatPriceWithOperator(price: string, operator: string): string {
+function formatPriceWithOperator(
+  price: string,
+  operator: string,
+  roomName = "",
+): string {
   const formatted = formatPrice(price);
   const op = operator.trim();
-  return op ? `${formatted} (${op})` : formatted;
+  const room = roomName.trim();
+  if (op && room) return `${formatted} (${op} · ${room})`;
+  if (op) return `${formatted} (${op})`;
+  if (room) return `${formatted} (${room})`;
+  return formatted;
 }
 
 /** Match baseline hotel by id, then hotelId, then name+coords. */
@@ -538,6 +565,7 @@ function formatPriceSlot(
   operator: string,
   history: PriceHistoryEntry[],
   flash?: PriceFlashEntry,
+  roomName = "",
 ): ReactNode {
   if (!price && !flash && history.length === 0) return null;
 
@@ -590,7 +618,7 @@ function formatPriceSlot(
     steps.push({
       node: (
         <span key="to" className={`font-medium ${trendColorClass(fromDigits, toDigits)}`}>
-          {formatPriceWithOperator(flash.to, operator)}
+          {formatPriceWithOperator(flash.to, operator, roomName)}
         </span>
       ),
       digits: toDigits,
@@ -607,7 +635,7 @@ function formatPriceSlot(
   if (steps.length === 0) {
     return (
       <span key={label}>
-        {label}: {formatPriceWithOperator(price, operator)}
+        {label}: {formatPriceWithOperator(price, operator, roomName)}
       </span>
     );
   }
@@ -620,7 +648,7 @@ function formatPriceSlot(
         key="current"
         className={`font-medium ${trendColorClass(prevDigits, currentDigits)}`}
       >
-        {formatPriceWithOperator(price, operator)}
+        {formatPriceWithOperator(price, operator, roomName)}
       </span>
     ),
     digits: currentDigits,
@@ -1059,6 +1087,18 @@ export default function App() {
           parsed.priceThreeRooms != null
             ? (parsed.operatorThreeRooms ?? "")
             : (duplicate?.operatorThreeRooms ?? f.operatorThreeRooms),
+        roomNameOneRoom:
+          parsed.priceOneRoom != null
+            ? (parsed.roomNameOneRoom ?? "")
+            : (duplicate?.roomNameOneRoom ?? f.roomNameOneRoom),
+        roomNameTwoRooms:
+          parsed.priceTwoRooms != null
+            ? (parsed.roomNameTwoRooms ?? "")
+            : (duplicate?.roomNameTwoRooms ?? f.roomNameTwoRooms),
+        roomNameThreeRooms:
+          parsed.priceThreeRooms != null
+            ? (parsed.roomNameThreeRooms ?? "")
+            : (duplicate?.roomNameThreeRooms ?? f.roomNameThreeRooms),
         tourRequestUrl: parsed.requestUrl ?? f.tourRequestUrl,
         tourRefererUrl: parsed.refererUrl ?? f.tourRefererUrl,
         priceHistoryOneRoom,
@@ -1087,6 +1127,7 @@ export default function App() {
             `1 room ${formatPriceWithOperator(
               String(parsed.priceOneRoom),
               parsed.operatorOneRoom ?? "",
+              parsed.roomNameOneRoom ?? "",
             )}`,
           );
         }
@@ -1095,6 +1136,7 @@ export default function App() {
             `2 rooms ${formatPriceWithOperator(
               String(parsed.priceTwoRooms),
               parsed.operatorTwoRooms ?? "",
+              parsed.roomNameTwoRooms ?? "",
             )}`,
           );
         }
@@ -1103,6 +1145,7 @@ export default function App() {
             `3 rooms ${formatPriceWithOperator(
               String(parsed.priceThreeRooms),
               parsed.operatorThreeRooms ?? "",
+              parsed.roomNameThreeRooms ?? "",
             )}`,
           );
         }
@@ -1207,6 +1250,9 @@ export default function App() {
       operatorOneRoom: form.operatorOneRoom.trim(),
       operatorTwoRooms: form.operatorTwoRooms.trim(),
       operatorThreeRooms: form.operatorThreeRooms.trim(),
+      roomNameOneRoom: form.roomNameOneRoom.trim(),
+      roomNameTwoRooms: form.roomNameTwoRooms.trim(),
+      roomNameThreeRooms: form.roomNameThreeRooms.trim(),
       tourRequestUrl:
         form.tourRequestUrl.trim() || existing?.tourRequestUrl || "",
       tourRefererUrl:
@@ -1256,6 +1302,9 @@ export default function App() {
       operatorOneRoom: note.operatorOneRoom,
       operatorTwoRooms: note.operatorTwoRooms,
       operatorThreeRooms: note.operatorThreeRooms,
+      roomNameOneRoom: note.roomNameOneRoom,
+      roomNameTwoRooms: note.roomNameTwoRooms,
+      roomNameThreeRooms: note.roomNameThreeRooms,
       tourRequestUrl: note.tourRequestUrl,
       tourRefererUrl: note.tourRefererUrl,
       priceHistoryOneRoom: note.priceHistoryOneRoom,
@@ -1501,6 +1550,9 @@ export default function App() {
           operatorOneRoom: u.operatorOneRoom,
           operatorTwoRooms: u.operatorTwoRooms,
           operatorThreeRooms: u.operatorThreeRooms,
+          roomNameOneRoom: u.roomNameOneRoom,
+          roomNameTwoRooms: u.roomNameTwoRooms,
+          roomNameThreeRooms: u.roomNameThreeRooms,
           priceHistoryOneRoom: u.priceHistoryOneRoom,
           priceHistoryTwoRooms: u.priceHistoryTwoRooms,
           priceHistoryThreeRooms: u.priceHistoryThreeRooms,
@@ -2401,6 +2453,7 @@ export default function App() {
                               n.operatorOneRoom,
                               n.priceHistoryOneRoom,
                               flash?.one,
+                              n.roomNameOneRoom,
                             ),
                             formatPriceSlot(
                               "2 rooms",
@@ -2408,6 +2461,7 @@ export default function App() {
                               n.operatorTwoRooms,
                               n.priceHistoryTwoRooms,
                               flash?.two,
+                              n.roomNameTwoRooms,
                             ),
                             formatPriceSlot(
                               "3 rooms",
@@ -2415,6 +2469,7 @@ export default function App() {
                               n.operatorThreeRooms,
                               n.priceHistoryThreeRooms,
                               flash?.three,
+                              n.roomNameThreeRooms,
                             ),
                           ]
                             .filter(Boolean)
@@ -2549,6 +2604,7 @@ export default function App() {
           notes={mapNotes}
           focusId={focusId}
           focusNonce={focusNonce}
+          ratingPrior={ratingPrior}
           onToggleFavorite={handleToggleFavorite}
           onToggleDisliked={handleToggleDisliked}
         />

@@ -21,6 +21,10 @@ export type HotelNote = {
   operatorTwoRooms: string;
   /** Tour operator for the 3-room price offer (auto-filled or manual). */
   operatorThreeRooms: string;
+  /** Catalog room type name for the winning 1-room offer. */
+  roomNameOneRoom: string;
+  roomNameTwoRooms: string;
+  roomNameThreeRooms: string;
   /** Last GetTours URL from curl parse — used by per-hotel price refresh. */
   tourRequestUrl: string;
   /** Referer from that curl (operator/meal filters + hotel page). */

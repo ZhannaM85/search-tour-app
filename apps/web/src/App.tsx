@@ -521,42 +521,150 @@ function applyBaselinePriceFlash(
   return { notes: nextNotes, flashById, changed };
 }
 
+type PriceStep = { node: ReactNode; digits: number | null };
+
+function priceDigitsValue(price: string): number | null {
+  const digits = parsePriceDigits(price);
+  return digits ? Number(digits) : null;
+}
+
+/** green = price dropped since the prior step, light red = it rose. */
+function trendColorClass(fromDigits: number | null, toDigits: number | null): string {
+  if (fromDigits == null || toDigits == null || fromDigits === toDigits) {
+    return "text-slate-800";
+  }
+  return toDigits < fromDigits ? "text-emerald-600" : "text-red-400";
+}
+
+function arrowColorClass(fromDigits: number | null, toDigits: number | null): string {
+  if (fromDigits == null || toDigits == null || fromDigits === toDigits) {
+    return "text-slate-400";
+  }
+  return toDigits < fromDigits ? "text-emerald-600" : "text-red-400";
+}
+
+/** Chains steps with " → " separators colored by that step's price trend. */
+function joinSteps(steps: PriceStep[]): ReactNode[] {
+  const out: ReactNode[] = [];
+  steps.forEach((step, i) => {
+    if (i > 0) {
+      out.push(
+        <span
+          key={`arrow-${i}`}
+          className={arrowColorClass(steps[i - 1].digits, step.digits)}
+        >
+          {" → "}
+        </span>,
+      );
+    }
+    out.push(step.node);
+  });
+  return out;
+}
+
+/**
+ * Full price chain for a room slot: every recorded past price (struck
+ * through, oldest first) leading up to the current price/flash, with each
+ * arrow/destination price colored by that step's trend (green = cheaper,
+ * light red = pricier). `history` is newest-first and already caps at
+ * PRICE_HISTORY_CAP entries.
+ */
 function formatPriceSlot(
   label: string,
   price: string,
   operator: string,
+  history: PriceHistoryEntry[],
   flash?: PriceFlashEntry,
 ): ReactNode {
-  if (!price && !flash) return null;
+  if (!price && !flash && history.length === 0) return null;
+
+  // history[0] duplicates flash.from (or, with no flash, the current price
+  // itself), so only the entries behind it are shown as extra past steps.
+  const steps: PriceStep[] = [...history.slice(1)].reverse().map((h, i) => ({
+    node: (
+      <span key={`h-${i}`} className="text-slate-400 line-through">
+        {formatPriceWithOperator(h.price, h.operator)}
+      </span>
+    ),
+    digits: priceDigitsValue(h.price),
+  }));
+
   if (flash && "unavailable" in flash) {
+    steps.push({
+      node: (
+        <span key="from" className="text-slate-400 line-through">
+          {formatPrice(flash.from)}
+        </span>
+      ),
+      digits: priceDigitsValue(flash.from),
+    });
+    steps.push({
+      node: (
+        <span key="to" className="font-medium">
+          no longer available
+        </span>
+      ),
+      digits: null,
+    });
     return (
       <span key={label} className="text-amber-800">
-        {label}:{" "}
-        <span className="text-slate-400 line-through">
-          {formatPrice(flash.from)}
-        </span>
-        {" → "}
-        <span className="font-medium">no longer available</span>
+        {label}: {joinSteps(steps)}
       </span>
     );
   }
+
   if (flash && "to" in flash) {
-    return (
-      <span key={label}>
-        {label}:{" "}
-        <span className="text-slate-400 line-through">
+    const fromDigits = priceDigitsValue(flash.from);
+    const toDigits = priceDigitsValue(flash.to);
+    steps.push({
+      node: (
+        <span key="from" className="text-slate-400 line-through">
           {formatPrice(flash.from)}
         </span>
-        {" → "}
-        <span className="font-medium text-slate-800">
+      ),
+      digits: fromDigits,
+    });
+    steps.push({
+      node: (
+        <span key="to" className={`font-medium ${trendColorClass(fromDigits, toDigits)}`}>
           {formatPriceWithOperator(flash.to, operator)}
         </span>
+      ),
+      digits: toDigits,
+    });
+    return (
+      <span key={label}>
+        {label}: {joinSteps(steps)}
       </span>
     );
   }
+
+  if (!price) return null;
+
+  if (steps.length === 0) {
+    return (
+      <span key={label}>
+        {label}: {formatPriceWithOperator(price, operator)}
+      </span>
+    );
+  }
+
+  const prevDigits = steps[steps.length - 1].digits;
+  const currentDigits = priceDigitsValue(price);
+  steps.push({
+    node: (
+      <span
+        key="current"
+        className={`font-medium ${trendColorClass(prevDigits, currentDigits)}`}
+      >
+        {formatPriceWithOperator(price, operator)}
+      </span>
+    ),
+    digits: currentDigits,
+  });
   return (
     <span key={label}>
-      {label}: {formatPriceWithOperator(price, operator)}
+      {label}: {joinSteps(steps)}
     </span>
   );
 }
@@ -2340,32 +2448,26 @@ export default function App() {
                               "1 room",
                               n.priceOneRoom,
                               n.operatorOneRoom,
+                              n.priceHistoryOneRoom,
                               flash?.one,
                             ),
                             formatPriceSlot(
                               "2 rooms",
                               n.priceTwoRooms,
                               n.operatorTwoRooms,
+                              n.priceHistoryTwoRooms,
                               flash?.two,
                             ),
                             formatPriceSlot(
                               "3 rooms",
                               n.priceThreeRooms,
                               n.operatorThreeRooms,
+                              n.priceHistoryThreeRooms,
                               flash?.three,
                             ),
                           ]
                             .filter(Boolean)
-                            .reduce<ReactNode[]>((acc, node, i) => {
-                              if (!node) return acc;
-                              if (acc.length) {
-                                acc.push(
-                                  <span key={`sep-${i}`}> · </span>,
-                                );
-                              }
-                              acc.push(node);
-                              return acc;
-                            }, []);
+                            .map((node, i) => <div key={i}>{node}</div>);
                         })()}
                       </div>
                       {!isPublicViewer && inlineNoteId === n.id ? (

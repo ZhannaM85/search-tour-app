@@ -382,12 +382,14 @@ function emptyRoomCountPrices(): RoomCountPrices {
 
 /**
  * Cheapest full `[88]` price per room count. Skips untyped rooms (`id <= 0`)
- * and does not apply referer operator/meal filters.
+ * and, when `filters` carries referer `operatorIds`/`mealsIds`, rows outside
+ * those sets.
  */
 function cheapestPricesByRoomCount(
   aaData: unknown[],
   hotelId: number | null,
   catalog: Map<number, RoomCatalogEntry>,
+  filters: TourPriceFilters = {},
 ): RoomCountPrices {
   const one: PriceWithOperator = { price: null, operator: null, roomName: null };
   const two: PriceWithOperator = { price: null, operator: null, roomName: null };
@@ -400,6 +402,15 @@ function cheapestPricesByRoomCount(
   for (const raw of aaData) {
     if (!Array.isArray(raw)) continue;
     if (hotelId != null && asNumber(raw, IDX.HOTEL_ID) !== hotelId) continue;
+
+    if (filters.operatorIds && filters.operatorIds.size > 0) {
+      const opId = asNumber(raw, IDX.OPERATOR_ID);
+      if (opId == null || !filters.operatorIds.has(opId)) continue;
+    }
+    if (filters.mealIds && filters.mealIds.size > 0) {
+      const mealId = asNumber(raw, IDX.MEAL_ID);
+      if (mealId == null || !filters.mealIds.has(mealId)) continue;
+    }
 
     const roomTypeId = asNumber(raw, IDX.ROOM_TYPE_ID);
     const price = tourPrice(raw);
@@ -471,9 +482,10 @@ export function extractFromTourRows(
   }
 
   const hotelId = asNumber(row, IDX.HOTEL_ID);
+  const filters = parseRefererPriceFilters(refererUrl);
   const prices =
     roomCatalog && roomCatalog.size > 0
-      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog)
+      ? cheapestPricesByRoomCount(aaData, hotelId, roomCatalog, filters)
       : emptyRoomCountPrices();
 
   return {

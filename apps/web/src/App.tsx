@@ -857,13 +857,22 @@ export default function App() {
         return Number.isFinite(price) && price <= maxPrice;
       });
     }
-    return sortHotels(
+    const base = sortHotels(
       list,
       sortMode,
       ratingPrior,
       priceFilterRoom,
       bestPricePercent,
     );
+    // Float the hotel currently being refreshed to the top so its progress
+    // is easy to track during a single or bulk refresh.
+    if (!refreshingId) return base;
+    const refreshingIdx = base.findIndex((n) => n.id === refreshingId);
+    if (refreshingIdx <= 0) return base;
+    const reordered = base.slice();
+    const [refreshingNote] = reordered.splice(refreshingIdx, 1);
+    reordered.unshift(refreshingNote!);
+    return reordered;
   }, [
     notes,
     favoritesOnly,
@@ -875,6 +884,7 @@ export default function App() {
     priceMax,
     bestPricePercent,
     ratingPrior,
+    refreshingId,
   ]);
 
   const listFiltered =
@@ -2349,13 +2359,15 @@ export default function App() {
                 <li
                   key={n.id}
                   className={`cursor-pointer rounded-xl border p-3 transition-colors ${
-                    focusId === n.id
-                      ? "border-teal-500 bg-teal-50 ring-1 ring-teal-400"
-                      : n.favorite
-                        ? "border-amber-300 bg-amber-50/60"
-                        : n.disliked
-                          ? "border-slate-200 bg-slate-100/80 opacity-70"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                    refreshingId === n.id
+                      ? "border-sky-400 bg-sky-50 ring-2 ring-sky-300"
+                      : focusId === n.id
+                        ? "border-teal-500 bg-teal-50 ring-1 ring-teal-400"
+                        : n.favorite
+                          ? "border-amber-300 bg-amber-50/60"
+                          : n.disliked
+                            ? "border-slate-200 bg-slate-100/80 opacity-70"
+                            : "border-slate-200 bg-slate-50 hover:border-slate-300"
                   }`}
                   onClick={() => toggleFocusHotel(n.id)}
                 >
@@ -2430,6 +2442,12 @@ export default function App() {
                         >
                           {n.name}
                         </span>
+                        {refreshingId === n.id ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-700">
+                            <RefreshIcon className="h-3 w-3 animate-spin" />
+                            Refreshing…
+                          </span>
+                        ) : null}
                       </div>
                       {(() => {
                         const quality = formatHotelQuality(

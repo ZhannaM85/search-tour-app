@@ -43,6 +43,7 @@ _Small presentation fixes from live use._
 | [#6](https://github.com/ZhannaM85/search-tour-app/issues/6) | ✅ Done | Sort displayed room prices by room count (1 → 2 → 3) | Map popup now 1 → 2 → 3 (list already was) |
 | [#8](https://github.com/ZhannaM85/search-tour-app/issues/8) | ✅ Done | Add sorting by hotel name | Name A→Z via localeCompare; favorites still pin first |
 | [#9](https://github.com/ZhannaM85/search-tour-app/issues/9) | ✅ Done | Replace row actions Refresh/Edit/Delete/Open with icons | Icon buttons + aria-labels; refresh spins while loading |
+| [#13](https://github.com/ZhannaM85/search-tour-app/issues/13) | ✅ Done | Color-code price change arrows (green = decrease, red = increase) | Each step's arrow + destination price colored by trend (emerald = cheaper, red-400 = pricier); applies per-transition in the chain, not just the latest; "no longer available" shown in amber |
 
 ---
 
